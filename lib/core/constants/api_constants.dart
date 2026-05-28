@@ -8,4 +8,5 @@ class ApiConstants {
   static const String forgetPasswordEndpoint = '$baseUrl/api/auth/forget-password';
   static const String verifyOtpEndpoint = '$baseUrl/api/auth/verify-otp';
   static const String resetPasswordEndpoint = '$baseUrl/api/auth/reset-password';
+  static const String logoutEndpoint = '$baseUrl/api/auth/logout';
 }

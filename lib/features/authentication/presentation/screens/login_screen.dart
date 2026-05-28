@@ -29,7 +29,6 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // Luồng Đăng nhập bằng tài khoản thông thường
   void _handleLogin() {
     if (!_formKey.currentState!.validate()) return;
 
@@ -43,7 +42,6 @@ class _LoginScreenState extends State<LoginScreen> {
           const SnackBar(content: Text('Đăng nhập thành công!'), backgroundColor: Colors.green),
         );
 
-        // 🌟 ĐÃ THÊM: Điều hướng sang HomeTab và hủy màn Login khỏi bộ nhớ stack
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const MainScreen()),
@@ -58,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // Luồng Đăng nhập bằng Google
+  // Login w Google
   void _handleGoogleLogin() {
     _authController.loginWithGoogle(
       onLoading: () => setState(() => _isGoogleLoading = true),
@@ -66,11 +64,10 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() => _isGoogleLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Đăng nhập Google thành công! Token: $googleToken'),
+              content: Text('Đăng nhập Google thành công!'),
               backgroundColor: Colors.blue
           ),
         );
-
 
         Navigator.pushReplacement(
           context,
@@ -91,7 +88,6 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Đăng nhập'),
-        centerTitle: true,
       ),
       body: Center(
         child: SingleChildScrollView(
@@ -111,7 +107,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Tên tài khoản hoặc Email',
                     prefixIcon: Icon(Icons.person_outline_rounded),
-                    border: OutlineInputBorder(),
                   ),
                   validator: (value) => (value == null || value.trim().isEmpty) ? 'Vui lòng nhập Username hoặc Email' : null,
                 ),
@@ -124,7 +119,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: InputDecoration(
                     labelText: 'Mật khẩu',
                     prefixIcon: const Icon(Icons.lock_outline_rounded),
-                    border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
                       onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
@@ -144,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           value: _rememberMe,
                           onChanged: (bool? value) => setState(() => _rememberMe = value ?? false),
                         ),
-                        const Text('Ghi nhớ tôi', style: TextStyle(fontSize: 14)),
+                        const Text('Remember me', style: TextStyle(fontSize: 14)),
                       ],
                     ),
                     // Navigate to Forgot Password
@@ -155,27 +149,19 @@ class _LoginScreenState extends State<LoginScreen> {
                           MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
                         );
                       },
-                      child: const Text('Quên mật khẩu?', style: TextStyle(color: Colors.blue)),
+                      child: const Text('Quên mật khẩu?'),
                     ),
                   ],
                 ),
                 const SizedBox(height: 24),
 
-                // 3. Nút Đăng nhập thường
+
                 _isLoading
                     ? const CircularProgressIndicator()
-                    : SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _handleLogin,
-                    style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('Đăng nhập', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
+                    : ElevatedButton(
+                  onPressed: _handleLogin,
+
+                  child: const Text('Đăng nhập'),
                 ),
                 const SizedBox(height: 20),
 
@@ -188,7 +174,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // 4. Nút LOGIN WITH GOOGLE
                 _isGoogleLoading
                     ? const CircularProgressIndicator()
                     : SizedBox(
@@ -206,7 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w600),
                     ),
                     style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       side: const BorderSide(color: Colors.grey),
                       backgroundColor: Colors.white,
                     ),
@@ -214,7 +199,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Nút chuyển hướng Đăng ký tài khoản
                 TextButton(
                   onPressed: () {
                     Navigator.push(

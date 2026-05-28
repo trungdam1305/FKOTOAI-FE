@@ -4,6 +4,10 @@ import '../home/presentation/home_tab.dart';
 import '../courses/presentation/my_courses_tab.dart';
 import '../profile/presentation/profile_tab.dart';
 import '../quiz/presentation/quiz_tab.dart';
+import 'package:bim/features/authentication/presentation/controllers/auth_controller.dart';
+import 'package:bim/features/authentication/presentation/screens/login_screen.dart';
+
+
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
 
@@ -33,8 +37,31 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: _buildAppBar(),
-      // Giữ nguyên trạng thái bằng IndexedStack
+
+      appBar: AppBar(
+        title: const Text('Hệ thống học tiếng Nhật'),
+        centerTitle: true,
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+
+        actions: [
+          _isLoggingOut
+              ? const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+            ),
+          )
+              : IconButton(
+            icon: const Icon(Icons.logout_rounded),
+            tooltip: 'Đăng xuất',
+            onPressed: _handleLogout,
+          ),
+        ],
+      ),
+
       body: IndexedStack(
         index: _selectedIndex,
         children: _screens,
@@ -94,6 +121,37 @@ class _MainScreenState extends State<MainScreen> {
       ],
     );
   }
+
+  final _authController = AuthController();
+  bool _isLoggingOut = false;
+
+  void _handleLogout() {
+    _authController.logout(
+      onLoading: () => setState(() => _isLoggingOut = true),
+      onSuccess: () {
+        setState(() => _isLoggingOut = false);
+
+        // Hiện thông báo thành công
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đã đăng xuất thành công!'), backgroundColor: Colors.blue),
+        );
+
+        // Điều hướng đẩy ngược người dùng về màn hình Đăng nhập và xóa sạch các tầng stack trước đó
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+              (route) => false, // Xóa sạch toàn bộ lịch sử các màn hình cũ
+        );
+      },
+      onError: (error) {
+        setState(() => _isLoggingOut = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: Colors.red),
+        );
+      },
+    );
+  }
+
 
   Widget _buildBottomNavigationBar() {
     return Container(

@@ -19,12 +19,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-  // Trạng thái điều khiển ban đầu
-  String _selectedLevel = 'N3'; // Choose Initial Level mặc định
+
+  String _selectedLevel = 'N5'; // Choose Initial Level
   bool _obscurePassword = true; // Toggle Password Visibility
   bool _isLoading = false;
 
-  final List<String> _japaneseLevels = ['N5', 'N4', 'N3', 'N2', 'N1'];
+  final List<String> _japaneseLevels = ['N5', 'N4'];
 
   @override
   void dispose() {
@@ -51,7 +51,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Đăng ký tài khoản thành công!'), backgroundColor: Colors.green),
         );
-        Navigator.pop(context); // Đăng ký xong quay về màn hình Login
+        Navigator.pop(context);
       },
       onError: (error) {
         setState(() => _isLoading = false);
@@ -65,7 +65,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Đăng ký tài khoản'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('Đăng ký tài khoản'),
+      ),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -83,7 +85,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Họ và tên (Full Name)',
                     prefixIcon: Icon(Icons.badge_outlined),
-                    border: OutlineInputBorder(),
                   ),
                   validator: (value) => (value == null || value.trim().isEmpty) ? 'Vui lòng nhập họ và tên' : null,
                 ),
@@ -96,7 +97,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Địa chỉ Email',
                     prefixIcon: Icon(Icons.email_outlined),
-                    border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) return 'Vui lòng nhập Email';
@@ -112,7 +112,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Tên tài khoản (Username)',
                     prefixIcon: Icon(Icons.account_circle_outlined),
-                    border: OutlineInputBorder(),
                   ),
                   validator: (value) => (value == null || value.trim().isEmpty) ? 'Vui lòng tạo Username' : null,
                 ),
@@ -125,7 +124,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: InputDecoration(
                     labelText: 'Mật khẩu (Password)',
                     prefixIcon: const Icon(Icons.lock_outline),
-                    border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
                       onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
@@ -135,13 +133,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
 
+                // 5. Confirm Password
                 TextFormField(
                   controller: _confirmPasswordController,
-                  obscureText: _obscurePassword, // Dùng chung biến ẩn hiện với ô password luôn cho tiện
+                  obscureText: _obscurePassword,
                   decoration: const InputDecoration(
                     labelText: 'Xác nhận mật khẩu (Confirm Password)',
                     prefixIcon: Icon(Icons.lock_reset_outlined),
-                    border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) return 'Vui lòng xác nhận lại mật khẩu';
@@ -151,12 +149,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
 
+                // Dropdown chọn trình độ tiếng Nhật ban đầu
                 DropdownButtonFormField<String>(
                   value: _selectedLevel,
                   decoration: const InputDecoration(
                     labelText: 'Trình độ tiếng Nhật ban đầu',
                     prefixIcon: Icon(Icons.translate_outlined),
-                    border: OutlineInputBorder(),
+
                   ),
                   items: _japaneseLevels.map((String level) {
                     return DropdownMenuItem<String>(
@@ -175,18 +174,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // 6. Register Account Button
                 _isLoading
                     ? const CircularProgressIndicator()
-                    : SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _handleRegister,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: const Text('Đăng ký ngay', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
+                    : ElevatedButton(
+                  onPressed: _handleRegister,
+
+                  child: const Text('Đăng ký ngay'),
                 ),
               ],
             ),

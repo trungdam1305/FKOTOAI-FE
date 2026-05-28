@@ -15,10 +15,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-
   int _currentStep = 0;
   bool _isLoading = false;
-  bool _obscurePassword = true; // Ẩn/hiện mật khẩu mới
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -29,12 +28,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  // Bước 1: Xử lý Gửi OTP qua Email
   void _handleSendOTP() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
-    // Giả lập gọi API Postman Mock (Độ trễ 1.2s)
     await Future.delayed(const Duration(milliseconds: 1200));
     setState(() => _isLoading = false);
 
@@ -42,13 +39,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       SnackBar(content: Text('Mã OTP đã được gửi đến ${_emailController.text}'), backgroundColor: Colors.green),
     );
 
-    // Chuyển sang bước nhập OTP
     setState(() {
       _currentStep = 1;
     });
   }
 
-  // Bước 2: Xử lý Xác thực mã OTP
   void _handleVerifyOTP() async {
     if (_otpController.text.trim().length < 4) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -61,18 +56,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     await Future.delayed(const Duration(milliseconds: 1000));
     setState(() => _isLoading = false);
 
-    // Giả lập OTP đúng (Ví dụ: bất kỳ mã nào đủ độ dài)
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Xác thực tài khoản thành công!'), backgroundColor: Colors.green),
     );
 
-    // Chuyển sang bước tạo mật khẩu mới
     setState(() {
       _currentStep = 2;
     });
   }
 
-  // Bước 3: Cập nhật mật khẩu mới hoàn tất luồng
   void _handleResetPassword() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -84,7 +76,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       const SnackBar(content: Text('Đặt lại mật khẩu thành công! Vui lòng đăng nhập lại.'), backgroundColor: Colors.green),
     );
 
-    // Quay lại màn hình Đăng nhập (LoginScreen)
     Navigator.pop(context);
   }
 
@@ -93,7 +84,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Khôi phục mật khẩu'),
-        centerTitle: true,
       ),
       body: Center(
         child: SingleChildScrollView(
@@ -103,7 +93,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Khối Icon thay đổi động theo từng bước cho sinh động
                 Icon(
                   _currentStep == 0
                       ? Icons.mark_email_read_outlined
@@ -115,38 +104,26 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Hiển thị nội dung Form tương ứng với từng Step
                 if (_currentStep == 0) _buildEmailStep(),
                 if (_currentStep == 1) _buildOtpStep(),
                 if (_currentStep == 2) _buildNewPasswordStep(),
 
                 const SizedBox(height: 32),
 
-                // Nút xử lý chính (Button chuyển đổi chức năng theo Step)
                 _isLoading
                     ? const CircularProgressIndicator()
-                    : SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _currentStep == 0
-                        ? _handleSendOTP
+                    : ElevatedButton(
+                  onPressed: _currentStep == 0
+                      ? _handleSendOTP
+                      : _currentStep == 1
+                      ? _handleVerifyOTP
+                      : _handleResetPassword,
+                  child: Text(
+                    _currentStep == 0
+                        ? 'Gửi mã xác thực'
                         : _currentStep == 1
-                        ? _handleVerifyOTP
-                        : _handleResetPassword,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: Text(
-                      _currentStep == 0
-                          ? 'Gửi mã xác thực'
-                          : _currentStep == 1
-                          ? 'Xác thực tài khoản'
-                          : 'Xác nhận đặt lại mật khẩu',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
+                        ? 'Xác thực tài khoản'
+                        : 'Xác nhận đặt lại mật khẩu',
                   ),
                 ),
               ],
@@ -157,7 +134,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 
-  // STEP 0: Input Registered Email & Send Link
+  //Input Registered Email & Send Link
   Widget _buildEmailStep() {
     return Column(
       children: [
@@ -173,7 +150,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           decoration: const InputDecoration(
             labelText: 'Địa chỉ Email đăng ký',
             prefixIcon: Icon(Icons.email_outlined),
-            border: OutlineInputBorder(),
           ),
           validator: (value) {
             if (value == null || value.trim().isEmpty) return 'Vui lòng nhập Email';
@@ -185,7 +161,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 
-  // STEP 1: Input OTP & Verify Account
+  //Input OTP & Verify Account
   Widget _buildOtpStep() {
     return Column(
       children: [
@@ -198,16 +174,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         TextFormField(
           controller: _otpController,
           keyboardType: TextInputType.number,
-          maxLength: 6, // Giới hạn mã OTP thường có 4-6 số
+          maxLength: 6,
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 8),
           decoration: const InputDecoration(
             labelText: 'Mã xác thực OTP',
             hintText: '000000',
-            border: OutlineInputBorder(),
-            counterText: '', // Ẩn bộ đếm chữ mặc định của Flutter
+            counterText: '',
           ),
         ),
+        const SizedBox(height: 8),
         TextButton(
           onPressed: () {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -220,7 +196,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 
-  // STEP 2: Create New Password & Confirm Password
+  //Create New Password & Confirm Password
   Widget _buildNewPasswordStep() {
     return Column(
       children: [
@@ -231,14 +207,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         ),
         const SizedBox(height: 24),
 
-        // Ô 1: Create New Password
+        //  1: Create New Password
         TextFormField(
           controller: _newPasswordController,
           obscureText: _obscurePassword,
           decoration: InputDecoration(
             labelText: 'Mật khẩu mới (New Password)',
             prefixIcon: const Icon(Icons.lock_outline),
-            border: const OutlineInputBorder(),
+
             suffixIcon: IconButton(
               icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
               onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
@@ -248,14 +224,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         ),
         const SizedBox(height: 16),
 
-        // Ô 2: Confirm Password Reset
+        //  2: Confirm Password Reset
         TextFormField(
           controller: _confirmPasswordController,
           obscureText: _obscurePassword,
           decoration: const InputDecoration(
             labelText: 'Xác nhận lại mật khẩu mới',
             prefixIcon: Icon(Icons.lock_reset_outlined),
-            border: OutlineInputBorder(),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) return 'Vui lòng nhập lại mật khẩu';

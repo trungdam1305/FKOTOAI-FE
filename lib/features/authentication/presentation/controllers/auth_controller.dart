@@ -124,4 +124,19 @@ class AuthController {
       onError(e.toString().replaceAll('Exception: ', ''));
     }
   }
+
+  //logout
+  Future<void> logout({
+    required Function() onLoading,
+    required Function() onSuccess,
+    required Function(String error) onError,
+  }) async {
+    onLoading();
+    try {
+      await _repository.logout();
+      onSuccess();
+    } catch (e) {
+      onError(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
 }

@@ -129,4 +129,25 @@ class AuthRepositoryImpl implements AuthRepository {
       throw Exception('Đặt lại mật khẩu thất bại. Vui lòng thử lại sau!');
     }
   }
+
+  @override
+  Future<void> logout() async {
+    final url = Uri.parse('https://0f510d00-6191-4436-a141-66c5fb3f52a6.mock.pstmn.io/api/auth/logout');
+
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      if (response.body.isEmpty) return;
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == false) {
+        throw Exception(data['message'] ?? 'Đăng xuất thất bại!');
+      }
+    } else {
+      throw Exception('Không thể kết nối đến máy chủ để đăng xuất!');
+    }
+  }
 }

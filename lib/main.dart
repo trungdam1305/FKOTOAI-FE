@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:bim/features/authentication/presentation/screens/login_screen.dart';
+import 'package:bim/core/theme/app_theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,10 +14,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Bim App',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-      ),
+      theme: AppTheme.lightTheme,
       home: const LoginScreen(),
     );
   }
