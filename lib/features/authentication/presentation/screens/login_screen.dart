@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:bim/features/authentication/presentation/controllers/auth_controller.dart';
 import 'package:bim/features/authentication/presentation/screens/register_screen.dart';
 import 'package:bim/features/authentication/presentation/screens/forgot_password_screen.dart';
-
+import 'package:bim/features/home/presentation/home_tab.dart'; // Giữ nguyên cấu trúc import này của bạn
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -29,6 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  // Luồng Đăng nhập bằng tài khoản thông thường
   void _handleLogin() {
     if (!_formKey.currentState!.validate()) return;
 
@@ -41,6 +42,12 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Đăng nhập thành công!'), backgroundColor: Colors.green),
         );
+
+        // 🌟 ĐÃ THÊM: Điều hướng sang HomeTab và hủy màn Login khỏi bộ nhớ stack
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeTab()),
+        );
       },
       onError: (error) {
         setState(() => _isLoading = false);
@@ -51,7 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // Hàm kích hoạt luồng Đăng nhập bằng Google
+  // Luồng Đăng nhập bằng Google
   void _handleGoogleLogin() {
     _authController.loginWithGoogle(
       onLoading: () => setState(() => _isGoogleLoading = true),
@@ -63,7 +70,12 @@ class _LoginScreenState extends State<LoginScreen> {
               backgroundColor: Colors.blue
           ),
         );
-        // Sau này chuyển hướng sang HomeScreen tại đây
+
+        // Điều hướng sang HomeTab khi đăng nhập Google thành công
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeTab()),
+        );
       },
       onError: (error) {
         setState(() => _isGoogleLoading = false);
@@ -135,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const Text('Ghi nhớ tôi', style: TextStyle(fontSize: 14)),
                       ],
                     ),
-                    // 4. Navigate to Forgot Password (Quên mật khẩu)
+                    // Navigate to Forgot Password
                     TextButton(
                       onPressed: () {
                         Navigator.push(
@@ -176,7 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // 4. Nút LOGIN WITH GOOGLE (Đạt chuẩn quy tắc thiết kế của Google)
+                // 4. Nút LOGIN WITH GOOGLE
                 _isGoogleLoading
                     ? const CircularProgressIndicator()
                     : SizedBox(
