@@ -5,4 +5,7 @@ class ApiConstants {
   //authen
   static const String loginEndpoint = '$baseUrl/api/auth/login';
   static const String registerEndpoint = '$baseUrl/api/auth/register';
+  static const String forgetPasswordEndpoint = '$baseUrl/api/auth/forget-password';
+  static const String verifyOtpEndpoint = '$baseUrl/api/auth/verify-otp';
+  static const String resetPasswordEndpoint = '$baseUrl/api/auth/reset-password';
 }
