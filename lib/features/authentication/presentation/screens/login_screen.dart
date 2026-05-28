@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:bim/features/authentication/presentation/controllers/auth_controller.dart';
 import 'package:bim/features/authentication/presentation/screens/register_screen.dart';
 import 'package:bim/features/authentication/presentation/screens/forgot_password_screen.dart';
-import 'package:bim/features/home/presentation/home_tab.dart'; // Giữ nguyên cấu trúc import này của bạn
+import 'package:bim/features/main/main_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,7 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
 
   bool _isLoading = false;
-  bool _isGoogleLoading = false; // Trạng thái loading riêng cho nút Google
+  bool _isGoogleLoading = false;
   bool _obscurePassword = true;
   bool _rememberMe = false;
 
@@ -46,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // 🌟 ĐÃ THÊM: Điều hướng sang HomeTab và hủy màn Login khỏi bộ nhớ stack
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomeTab()),
+          MaterialPageRoute(builder: (context) => const MainScreen()),
         );
       },
       onError: (error) {
@@ -71,10 +71,10 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         );
 
-        // Điều hướng sang HomeTab khi đăng nhập Google thành công
+
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomeTab()),
+          MaterialPageRoute(builder: (context) => const MainScreen()),
         );
       },
       onError: (error) {
