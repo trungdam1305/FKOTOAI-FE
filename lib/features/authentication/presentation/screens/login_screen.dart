@@ -3,6 +3,7 @@ import 'package:bim/features/authentication/presentation/controllers/auth_contro
 import 'package:bim/features/authentication/presentation/screens/register_screen.dart';
 import 'package:bim/features/authentication/presentation/screens/forgot_password_screen.dart';
 import 'package:bim/features/main/main_screen.dart';
+import 'dart:ui';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -85,10 +86,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double logoSize = screenWidth > 600 ? 120 : screenWidth * 0.23;
+    final double fontSize = screenWidth > 600 ? 32 : screenWidth * 0.07;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Đăng nhập'),
-      ),
+      // appBar: AppBar(
+      //   title: const Text('Đăng nhập'),
+      // ),
+      backgroundColor: Colors.grey[100],
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -97,8 +103,28 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.lock_person_rounded, size: 80, color: Colors.blue),
-                const SizedBox(height: 32),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/images/lo.png',
+                      height: logoSize,
+                      width: logoSize,
+                      fit: BoxFit.contain,
+                    ),
+                    SizedBox(width: screenWidth * 0.04),
+                    Text(
+                      'FKOTOAI',
+                      style: TextStyle(
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blueAccent,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 25),
 
                 // 1. Username/Email Input
                 TextFormField(
@@ -176,26 +202,41 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 _isGoogleLoading
                     ? const CircularProgressIndicator()
-                    : SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: OutlinedButton.icon(
-                    onPressed: _handleGoogleLogin,
-                    icon: Image.network(
-                      'assets/images/img.png',
-                      height: 22,
-                      width: 22,
-                    ),
-                    label: const Text(
-                      'Đăng nhập với Google',
-                      style: TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      side: const BorderSide(color: Colors.grey),
-                      backgroundColor: Colors.white,
-                    ),
-                  ),
+                    : LayoutBuilder(
+                  builder: (context, constraints) {
+                    final double screenWidth = MediaQuery.of(context).size.width;
+                    final double buttonWidth = screenWidth > 600 ? 400 : screenWidth * 0.85;
+
+                    return SizedBox(
+                      width: buttonWidth,
+                      height: 50,
+                      child: OutlinedButton.icon(
+                        onPressed: _handleGoogleLogin,
+                        icon: Image.asset(
+                          'assets/images/img.png',
+                          height: 22,
+                          width: 22,
+                          fit: BoxFit.contain,
+                        ),
+                        label: const Flexible(
+                          child: Text(
+                            'Đăng nhập với Google',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.black87,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          side: const BorderSide(color: Colors.grey),
+                          backgroundColor: Colors.white,
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 24),
 
