@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:bim/core/constants/api_constants.dart';
 import '../../domain/repositories/auth_repository.dart';
-
+import 'package:bim/features/authentication/data/auth_local_data_source.dart';
 class AuthRepositoryImpl implements AuthRepository {
+
+  final AuthLocalDataSource _localDataSource = AuthLocalDataSource();
 
   //login
   @override
@@ -22,6 +24,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
 
     if (response.statusCode == 200) {
+      String token = 'mock_jwt_token_for_login_12345'; // Token dự phòng nếu Backend trả về rỗng
       if (response.body.isNotEmpty) {
         try {
           final data = jsonDecode(response.body);
@@ -30,9 +33,10 @@ class AuthRepositoryImpl implements AuthRepository {
           return 'mock_jwt_token_for_login_12345';
         }
       }
+      await _localDataSource.saveToken(token);
 
-      // Trường hợp Postman trả về Body trống rỗng
-      return 'mock_jwt_token_for_login_12345';
+      return token;
+      // return 'mock_jwt_token_for_login_12345';
     } else {
       throw Exception('Tài khoản hoặc mật khẩu không chính xác!');
     }

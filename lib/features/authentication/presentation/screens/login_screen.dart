@@ -112,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: logoSize,
                       fit: BoxFit.contain,
                     ),
-                    SizedBox(width: screenWidth * 0.04),
+                    SizedBox(width: screenWidth * 0.01),
                     Text(
                       'FKOTOAI',
                       style: TextStyle(
