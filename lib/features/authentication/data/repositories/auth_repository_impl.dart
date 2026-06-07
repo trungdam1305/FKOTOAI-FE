@@ -18,31 +18,32 @@ class AuthRepositoryImpl implements AuthRepository {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'email': email,
-        'password': password,
+        'passwordHash': password,
       }),
     );
 
-
     if (response.statusCode == 200) {
-      String token = 'mock_jwt_token_for_login_12345'; // Token dự phòng nếu Backend trả về rỗng
       if (response.body.isNotEmpty) {
         try {
           final data = jsonDecode(response.body);
-          return data['token'] ?? 'mock_jwt_token_for_login_12345';
-        } catch (_) {
-          return 'mock_jwt_token_for_login_12345';
+
+          if (data['code'] == 8386 && data['result'] != null) {
+            String token = data['result']['token'];
+
+            await _localDataSource.saveToken(token);
+            return token;
+          }
+        } catch (e) {
+          throw Exception('Lỗi xử lý dữ liệu hệ thống: $e');
         }
       }
-      await _localDataSource.saveToken(token);
-
-      return token;
-      // return 'mock_jwt_token_for_login_12345';
+      throw Exception('Tài khoản hoặc mật khẩu không chính xác!');
     } else {
       throw Exception('Tài khoản hoặc mật khẩu không chính xác!');
     }
   }
 
-  //register
+// register
   @override
   Future<void> register({
     required String fullName,
@@ -57,11 +58,11 @@ class AuthRepositoryImpl implements AuthRepository {
       url,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'fullName': fullName,
+        'fullname': fullName,
         'email': email,
         'username': username,
-        'password': password,
-        'initialLevel': initialLevel,
+        'passwordHash': password,
+        'currentLevel': initialLevel,
       }),
     );
 
@@ -70,11 +71,13 @@ class AuthRepositoryImpl implements AuthRepository {
 
       try {
         final data = jsonDecode(response.body);
-        if (data['success'] == false) {
+
+        if (data['code'] != 8386) {
           throw Exception(data['message'] ?? 'Đăng ký không thành công!');
         }
-      } catch (_) {
-        return;
+      } catch (e) {
+        if (e is Exception) rethrow;
+        throw Exception('Lỗi xử lý dữ liệu hệ thống!');
       }
     } else {
       throw Exception('Đăng ký thất bại. Vui lòng thử lại sau!');

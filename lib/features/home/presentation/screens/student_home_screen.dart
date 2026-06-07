@@ -77,7 +77,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header chào hỏi
           _buildHeader(data['studentName'] ?? 'Học viên', data['currentLevel'] ?? 'N3'),
           const SizedBox(height: 24),
 
@@ -89,7 +88,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           _buildFeatureItem(Icons.style_rounded, 'Flashcards', Colors.purple, () {
             if (!mounted) return;
 
-            // 🚀 Bấm phát navigate thẳng sang màn hình Dashboard luôn, không check data rườm rà nữa!
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -208,7 +206,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       childAspectRatio: 1.1,
       children: [
         _buildFeatureItem(Icons.style_rounded, 'Flashcards', Colors.purple, () {
-          // 🚀 TẠM THỜI: Navigate thẳng sang trang Dashboard để load data bộ từ vựng
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -217,10 +214,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           );
         }),
         _buildFeatureItem(Icons.quiz_rounded, 'Online Quiz', Colors.orange, () {
-          // Xử lý quiz sau
         }),
         _buildFeatureItem(Icons.analytics_rounded, 'Dashboard', Colors.teal, () {
-          // Xử lý dashboard sau
         }),
       ],
     );

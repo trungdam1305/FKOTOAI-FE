@@ -17,7 +17,6 @@ class ProfileController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Tự đọc token từ Keychain/Keystore ra ở đây
       final token = await _localDataSource.getToken();
 
       if (token == null || token.isEmpty) {

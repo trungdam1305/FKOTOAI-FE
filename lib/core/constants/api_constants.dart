@@ -1,10 +1,10 @@
 
 class ApiConstants {
-  static const String baseUrl = 'https://0f510d00-6191-4436-a141-66c5fb3f52a6.mock.pstmn.io';
-
+  // static const String baseUrl = 'https://0f510d00-6191-4436-a141-66c5fb3f52a6.mock.pstmn.io';
+  static const String baseUrl = 'http://10.0.2.2:8080/FKOTOAI';
   //authen
-  static const String loginEndpoint = '$baseUrl/api/auth/login';
-  static const String registerEndpoint = '$baseUrl/api/auth/register';
+  static const String loginEndpoint = '$baseUrl/authen/log-in';
+  static const String registerEndpoint = '$baseUrl/student';
   static const String forgetPasswordEndpoint = '$baseUrl/api/auth/forget-password';
   static const String verifyOtpEndpoint = '$baseUrl/api/auth/verify-otp';
   static const String resetPasswordEndpoint = '$baseUrl/api/auth/reset-password';

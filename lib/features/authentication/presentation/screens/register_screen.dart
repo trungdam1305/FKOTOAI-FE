@@ -12,7 +12,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _authController = AuthController();
 
-  // Input Controllers đúng theo yêu cầu
+  // Input Controllers
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _usernameController = TextEditingController();
@@ -149,7 +149,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Dropdown chọn trình độ tiếng Nhật ban đầu
+                // Dropdown level
                 DropdownButtonFormField<String>(
                   value: _selectedLevel,
                   decoration: const InputDecoration(

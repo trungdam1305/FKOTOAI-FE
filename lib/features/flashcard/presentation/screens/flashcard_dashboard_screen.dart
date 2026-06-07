@@ -25,7 +25,6 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
     _fetchFoldersData();
   }
 
-  // 📥 Tải dữ liệu bộ học phần từ API Server
   Future<void> _fetchFoldersData() async {
     setState(() { _isLoading = true; _errorMessage = ''; });
     try {
@@ -47,7 +46,7 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
     } catch (e) { _showSnackBar('Lỗi: $e'); }
   }
 
-  // ✏️ Sửa tên Folder
+  // edit folder
   Future<void> _updateFolder(int index, String title, String desc) async {
     final folderId = _folders[index]['id'].toString();
     try {
@@ -57,7 +56,7 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
     } catch (e) { _showSnackBar('Lỗi: $e'); }
   }
 
-  // 🗑️ Xóa sạch Folder khỏi hệ thống
+  // del folder
   Future<void> _deleteFolder(int index) async {
     final folderId = _folders[index]['id'].toString();
     try {
@@ -67,7 +66,7 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
     } catch (e) { _showSnackBar('Lỗi: $e'); }
   }
 
-  // ➕ Thêm thẻ từ nhỏ vào Folder cụ thể
+  // add card
   Future<void> _addCardToFolder(int folderIndex, Map<String, String> cardData) async {
     final folderId = _folders[folderIndex]['id'].toString();
     try {
@@ -77,7 +76,7 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
     } catch (e) { _showSnackBar('Lỗi: $e'); }
   }
 
-  // ✏️ Sửa thông tin một thẻ từ nhỏ
+  // edit card
   Future<void> _updateCardInFolder(int folderIndex, int cardIndex, Map<String, String> cardData) async {
     final folderId = _folders[folderIndex]['id'].toString();
     final cardId = (_folders[folderIndex]['flashcards'][cardIndex]['id'] ?? cardIndex).toString();
@@ -88,7 +87,7 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
     } catch (e) { _showSnackBar('Lỗi: $e'); }
   }
 
-  // 🗑️ Xóa một thẻ từ nhỏ ra khỏi tập hồ sơ
+  // del card
   Future<void> _deleteCardFromFolder(int folderIndex, int cardIndex) async {
     final folderId = _folders[folderIndex]['id'].toString();
     final cardId = (_folders[folderIndex]['flashcards'][cardIndex]['id'] ?? cardIndex).toString();
@@ -104,9 +103,7 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), duration: const Duration(seconds: 2)));
   }
 
-  // =========================================================================
-  // DIALOG THÊM / SỬA THƯ MỤC LỚN
-  // =========================================================================
+
   void _showFolderDialog({int? index}) {
     final isEdit = index != null;
     final titleCtrl = TextEditingController(text: isEdit ? _folders[index]['title'] : '');
@@ -142,9 +139,7 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
     );
   }
 
-  // =========================================================================
-  // DIALOG THÊM / SỬA THẺ TỪ NHỎ (DÙNG CHO MÀN CHI TIẾT)
-  // =========================================================================
+
   void _showCardDialog(BuildContext context, int folderIndex, {int? cardIndex}) {
     final isEdit = cardIndex != null;
     final folder = _folders[folderIndex];
@@ -193,9 +188,7 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
     );
   }
 
-  // =========================================================================
-  // MÀN HÌNH CHI TIẾT BÊN TRONG CỦA MỘT THƯ MỤC (XEM & CRUD THẺ NHỎ)
-  // =========================================================================
+
   void _openFolderDetail(int folderIndex) {
     Navigator.push(
       context,
@@ -298,9 +291,7 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
     ).then((_) => _fetchFoldersData());
   }
 
-  // =========================================================================
-  // GIAO DIỆN CHÍNH DASHBOARD
-  // =========================================================================
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

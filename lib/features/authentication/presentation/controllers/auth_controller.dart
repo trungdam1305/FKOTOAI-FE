@@ -90,7 +90,7 @@ class AuthController {
     }
   }
 
-  // 2. Xác thực mã OTP
+  // cf otp
   Future<void> verifyResetOTP({
     required String email,
     required String otp,
@@ -107,7 +107,7 @@ class AuthController {
     }
   }
 
-  // 3. Tạo mật khẩu mới (Confirm Reset)
+  // 3. Confirm Reset
   Future<void> confirmPasswordReset({
     required String email,
     required String otp,

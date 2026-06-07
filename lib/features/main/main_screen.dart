@@ -93,7 +93,7 @@ class _MainScreenState extends State<MainScreen> {
       ),
       body: IndexedStack(
         index: _selectedIndex,
-        children: screens, // Sử dụng danh sách screens động vừa tạo ở trên
+        children: screens,
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
