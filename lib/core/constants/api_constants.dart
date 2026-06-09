@@ -5,19 +5,28 @@ class ApiConstants {
   //authen
   static const String loginEndpoint = '$baseUrl/authen/log-in';
   static const String registerEndpoint = '$baseUrl/student';
-  static const String forgetPasswordEndpoint = '$baseUrl/api/auth/forget-password';
-  static const String verifyOtpEndpoint = '$baseUrl/api/auth/verify-otp';
-  static const String resetPasswordEndpoint = '$baseUrl/api/auth/reset-password';
-  static const String logoutEndpoint = '$baseUrl/api/auth/logout';
+  //static const String forgetPasswordEndpoint = '$baseUrl/api/auth/forget-password';
+  //static const String verifyOtpEndpoint = '$baseUrl/api/auth/verify-otp';
+  //static const String resetPasswordEndpoint = '$baseUrl/api/auth/reset-password';
+  //static const String logoutEndpoint = '$baseUrl/api/auth/logout';
 
   //home
   static String dashboardEndpoint(Object studentId) => '$baseUrl/api/v1/students/$studentId/home';
 
   //flashcard
-  static const String flashcardEndpoint = '$baseUrl/api/flashcard/learning';
-  static const String flashcardCollectionEndpoint = '$baseUrl/api/flashcard/collection';
+  static const String flashcardByChapterEndpoint = '$baseUrl/flashcards/chapters';
+  static const String flashcardReviewEndpoint = '$baseUrl/flashcards/review';
 
   //profile
   static String profileEndpoint(Object studentId) => '$baseUrl/student/$studentId';
   static const String updateProfileEndpoint = '$baseUrl/student/update-profile';
+
+  // Vocabulary Chapter Endpoints
+  static const String vocabularyChaptersEndpoint = '$baseUrl/vocabulary-chapters';
+  static const String myChaptersEndpoint = '$baseUrl/vocabulary-chapters/my';
+  static const String systemChaptersEndpoint = '$baseUrl/vocabulary-chapters/system';
+
+  // Progress Endpoints
+  static const String progressEndpoint = '$baseUrl/v1/progress';
+  static const String weakVocabEndpoint = '$baseUrl/v1/progress/weak-vocab';
 }

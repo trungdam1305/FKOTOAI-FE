@@ -1,10 +1,18 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:bim/features/authentication/data/auth_local_data_source.dart';
 import 'package:bim/features/flashcard/data/repositories/flashcard_repository_impl.dart';
-import 'flashcard_learning_screen.dart';
+import 'VocabularyChapterScreen.dart';
 
 class FlashcardDashboardScreen extends StatefulWidget {
   final VoidCallback? onExitPressed;
-  const FlashcardDashboardScreen({super.key, this.onExitPressed});
+  final int chapterId;
+
+  const FlashcardDashboardScreen({
+    super.key,
+    this.onExitPressed,
+    required this.chapterId,
+  });
 
   @override
   State<FlashcardDashboardScreen> createState() => _FlashcardDashboardScreenState();
@@ -12,25 +20,60 @@ class FlashcardDashboardScreen extends StatefulWidget {
 
 class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
   final FlashcardRepositoryImpl _flashcardRepo = FlashcardRepositoryImpl();
+  final AuthLocalDataSource _authLocalDataSource = AuthLocalDataSource();
 
   bool _isLoading = true;
   String _errorMessage = '';
-  List<dynamic> _folders = [];
-
-  final String _token = "dummy_user_token";
+  List<dynamic> _flashcards = [];
+  String _realToken = '';
 
   @override
   void initState() {
     super.initState();
-    _fetchFoldersData();
+    _initAuthAndFetchFlashcards();
   }
 
-  Future<void> _fetchFoldersData() async {
-    setState(() { _isLoading = true; _errorMessage = ''; });
+  Future<void> _initAuthAndFetchFlashcards() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
     try {
-      final data = await _flashcardRepo.fetchCollections(_token);
-      setState(() { _folders = data; _isLoading = false; });
+      final String? userToken = await _authLocalDataSource.getToken();
+
+      if (userToken == null || userToken.isEmpty) {
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!';
+        });
+        return;
+      }
+
+      _realToken = userToken;
+      await _fetchFlashcardsData();
     } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Lỗi đọc mã xác thực hệ thống: $e';
+      });
+    }
+  }
+
+  Future<void> _fetchFlashcardsData() async {
+    try {
+      final responseData = await _flashcardRepo.getFlashcards(_realToken, chapterId: widget.chapterId);
+
+      if (!mounted) return;
+      setState(() {
+        _flashcards = responseData['result'] ?? [];
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = e.toString().replaceAll('Exception: ', '');
         _isLoading = false;
@@ -38,259 +81,158 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
     }
   }
 
-  Future<void> _createFolder(String title, String desc) async {
+  // [CREATE] Flashcard
+  Future<void> _createFlashcard(String word, String furigana, String meaning) async {
+    setState(() => _isLoading = true);
     try {
-      await _flashcardRepo.createCollection(_token, title, desc);
-      await _fetchFoldersData();
-      _showSnackBar('Đã tạo học phần mới thành công!');
-    } catch (e) { _showSnackBar('Lỗi: $e'); }
+      // final response = await _flashcardRepo.createFlashcard(_realToken, chapterId: widget.chapterId, ...);
+
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      final newCard = {
+        'id': DateTime.now().millisecondsSinceEpoch,
+        'word': word,
+        'furigana': furigana,
+        'meaning': meaning,
+        'status': 'NEW'
+      };
+
+      setState(() {
+        _flashcards.insert(0, newCard);
+        _isLoading = false;
+      });
+      _showSnackBar('Thêm thẻ từ vựng mới thành công!');
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showSnackBar('Lỗi thêm thẻ: $e', isError: true);
+    }
   }
 
-  // edit folder
-  Future<void> _updateFolder(int index, String title, String desc) async {
-    final folderId = _folders[index]['id'].toString();
+  // [UPDATE] Flashcard
+  Future<void> _updateFlashcard(dynamic cardId, String word, String furigana, String meaning) async {
+    setState(() => _isLoading = true);
     try {
-      await _flashcardRepo.updateCollection(_token, folderId, title, desc);
-      await _fetchFoldersData();
-      _showSnackBar('Đã cập nhật học phần!');
-    } catch (e) { _showSnackBar('Lỗi: $e'); }
+      // final response = await _flashcardRepo.updateFlashcard(_realToken, cardId: cardId, ...);
+
+      await Future.delayed(const Duration(milliseconds: 500));
+
+
+      setState(() {
+        final index = _flashcards.indexWhere((element) => element['id'] == cardId);
+        if (index != -1) {
+          _flashcards[index]['word'] = word;
+          _flashcards[index]['furigana'] = furigana;
+          _flashcards[index]['meaning'] = meaning;
+        }
+        _isLoading = false;
+      });
+      _showSnackBar('Cập nhật thẻ từ vựng thành công!');
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showSnackBar('Lỗi cập nhật thẻ: $e', isError: true);
+    }
   }
 
-  // del folder
-  Future<void> _deleteFolder(int index) async {
-    final folderId = _folders[index]['id'].toString();
+  // [DELETE] Flashcard
+  Future<void> _deleteFlashcard(dynamic cardId) async {
+    setState(() => _isLoading = true);
     try {
-      await _flashcardRepo.deleteCollection(_token, folderId);
-      await _fetchFoldersData();
-      _showSnackBar('Đã xóa học phần.');
-    } catch (e) { _showSnackBar('Lỗi: $e'); }
+      // await _flashcardRepo.deleteFlashcard(_realToken, cardId: cardId);
+
+      await Future.delayed(const Duration(milliseconds: 400));
+
+      setState(() {
+        _flashcards.removeWhere((element) => element['id'] == cardId);
+        _isLoading = false;
+      });
+      _showSnackBar('Đã xóa thẻ học khỏi chương này.');
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showSnackBar('Lỗi xóa thẻ: $e', isError: true);
+    }
   }
 
-  // add card
-  Future<void> _addCardToFolder(int folderIndex, Map<String, String> cardData) async {
-    final folderId = _folders[folderIndex]['id'].toString();
-    try {
-      await _flashcardRepo.addCard(_token, folderId, cardData);
-      await _fetchFoldersData();
-      _showSnackBar('Đã thêm từ mới vào học phần!');
-    } catch (e) { _showSnackBar('Lỗi: $e'); }
-  }
-
-  // edit card
-  Future<void> _updateCardInFolder(int folderIndex, int cardIndex, Map<String, String> cardData) async {
-    final folderId = _folders[folderIndex]['id'].toString();
-    final cardId = (_folders[folderIndex]['flashcards'][cardIndex]['id'] ?? cardIndex).toString();
-    try {
-      await _flashcardRepo.updateCard(_token, folderId, cardId, cardData);
-      await _fetchFoldersData();
-      _showSnackBar('Đã sửa từ vựng!');
-    } catch (e) { _showSnackBar('Lỗi: $e'); }
-  }
-
-  // del card
-  Future<void> _deleteCardFromFolder(int folderIndex, int cardIndex) async {
-    final folderId = _folders[folderIndex]['id'].toString();
-    final cardId = (_folders[folderIndex]['flashcards'][cardIndex]['id'] ?? cardIndex).toString();
-    try {
-      await _flashcardRepo.deleteCard(_token, folderId, cardId);
-      await _fetchFoldersData();
-      _showSnackBar('Đã xóa từ vựng khỏi học phần.');
-    } catch (e) { _showSnackBar('Lỗi: $e'); }
-  }
-
-  void _showSnackBar(String msg) {
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), duration: const Duration(seconds: 2)));
-  }
-
-
-  void _showFolderDialog({int? index}) {
-    final isEdit = index != null;
-    final titleCtrl = TextEditingController(text: isEdit ? _folders[index]['title'] : '');
-    final descCtrl = TextEditingController(text: isEdit ? _folders[index]['description'] : '');
+  void _openFlashcardFormDialog({Map<String, dynamic>? selectedCard}) {
+    final isEditMode = selectedCard != null;
+    final wordController = TextEditingController(text: isEditMode ? (selectedCard['word'] ?? selectedCard['front'] ?? '') : '');
+    final furiganaController = TextEditingController(text: isEditMode ? (selectedCard['furigana'] ?? '') : '');
+    final meaningController = TextEditingController(text: isEditMode ? (selectedCard['meaning'] ?? selectedCard['back'] ?? '') : '');
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(isEdit ? 'Sửa tên học phần' : 'Tạo học phần mới', style: const TextStyle(fontWeight: FontWeight.bold)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Tên học phần (Ví dụ: Bài 3)')),
-            TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Mô tả ngắn')),
-          ],
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(isEditMode ? 'Chỉnh sửa từ vựng' : 'Thêm từ vựng mới', style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: wordController,
+                decoration: const InputDecoration(labelText: 'Từ vựng / Kanji *', hintText: 'Ví dụ: 日本語'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: furiganaController,
+                decoration: const InputDecoration(labelText: 'Cách đọc / Furigana', hintText: 'Ví dụ: にほんご'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: meaningController,
+                decoration: const InputDecoration(labelText: 'Nghĩa tiếng Việt *', hintText: 'Ví dụ: Tiếng Nhật'),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.purple, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
             onPressed: () {
-              if (titleCtrl.text.trim().isEmpty) return;
-              if (isEdit) {
-                _updateFolder(index, titleCtrl.text.trim(), descCtrl.text.trim());
-              } else {
-                _createFolder(titleCtrl.text.trim(), descCtrl.text.trim());
+              if (wordController.text.trim().isEmpty || meaningController.text.trim().isEmpty) {
+                _showSnackBar('Vui lòng nhập đầy đủ các trường bắt buộc (*)', isError: true);
+                return;
               }
               Navigator.pop(context);
+              if (isEditMode) {
+                _updateFlashcard(selectedCard['id'], wordController.text.trim(), furiganaController.text.trim(), meaningController.text.trim());
+              } else {
+                _createFlashcard(wordController.text.trim(), furiganaController.text.trim(), meaningController.text.trim());
+              }
             },
-            child: Text(isEdit ? 'Cập nhật' : 'Tạo'),
-          )
+            child: Text(isEditMode ? 'Cập nhật' : 'Thêm mới', style: const TextStyle(color: Colors.white)),
+          ),
         ],
       ),
     );
   }
 
-
-  void _showCardDialog(BuildContext context, int folderIndex, {int? cardIndex}) {
-    final isEdit = cardIndex != null;
-    final folder = _folders[folderIndex];
-    final card = isEdit ? folder['flashcards'][cardIndex] : null;
-
-    final wordCtrl = TextEditingController(text: isEdit ? card['word'] : '');
-    final furiganaCtrl = TextEditingController(text: isEdit ? card['furigana'] : '');
-    final meaningCtrl = TextEditingController(text: isEdit ? card['meaning'] : '');
-
+  // DELETE Flashcard
+  void _confirmDeleteFlashcard(dynamic cardId) {
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(isEdit ? 'Sửa thẻ từ' : 'Thêm từ mới', style: const TextStyle(fontWeight: FontWeight.bold)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: wordCtrl, decoration: const InputDecoration(labelText: 'Từ vựng (Kanji)')),
-            TextField(controller: furiganaCtrl, decoration: const InputDecoration(labelText: 'Furigana')),
-            TextField(controller: meaningCtrl, decoration: const InputDecoration(labelText: 'Nghĩa tiếng Việt')),
-          ],
-        ),
+      builder: (context) => AlertDialog(
+        title: const Text('Xác nhận xóa'),
+        content: const Text('Bạn có chắc chắn muốn xóa thẻ từ vựng này không?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
+          TextButton(
             onPressed: () {
-              if (wordCtrl.text.trim().isEmpty || meaningCtrl.text.trim().isEmpty) return;
-              final data = {
-                "word": wordCtrl.text.trim(),
-                "furigana": furiganaCtrl.text.trim(),
-                "meaning": meaningCtrl.text.trim(),
-                "type": "Từ vựng",
-                "example_jp": "",
-                "example_vi": ""
-              };
-              if (isEdit) {
-                _updateCardInFolder(folderIndex, cardIndex, data);
-              } else {
-                _addCardToFolder(folderIndex, data);
-              }
-              Navigator.pop(dialogContext);
+              Navigator.pop(context);
+              _deleteFlashcard(cardId);
             },
-            child: Text(isEdit ? 'Lưu' : 'Thêm'),
-          )
+            child: const Text('Xóa', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
         ],
       ),
     );
   }
 
-
-  void _openFolderDetail(int folderIndex) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => StatefulBuilder(
-          builder: (context, setDetailState) {
-            final folder = _folders[folderIndex];
-            final List cards = folder['flashcards'] ?? [];
-
-            return Scaffold(
-              backgroundColor: const Color(0xFFF8F9FA),
-              appBar: AppBar(
-                title: Text(folder['title'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black)),
-                backgroundColor: Colors.white,
-                elevation: 0.5,
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.black),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ),
-              body: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton.icon(
-                        onPressed: cards.isEmpty
-                            ? null
-                            : () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => FlashcardLearningScreen(flashcards: cards),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
-                        label: const Text('Bắt đầu học lật thẻ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.purple, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text('Các từ vựng trong học phần (${cards.length})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 10),
-                    Expanded(
-                      child: cards.isEmpty
-                          ? const Center(child: Text('Học phần này chưa có từ nào. Ấn (+) để thêm.'))
-                          : ListView.separated(
-                        itemCount: cards.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
-                        itemBuilder: (context, cardIndex) {
-                          final card = cards[cardIndex];
-                          return Card(
-                            color: Colors.white,
-                            child: ListTile(
-                              title: Text(card['word'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.purple)),
-                              subtitle: Text('${card['furigana'] ?? ''} \n${card['meaning'] ?? ''}'),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.edit, color: Colors.amber),
-                                    onPressed: () {
-                                      _showCardDialog(context, folderIndex, cardIndex: cardIndex);
-                                      setDetailState(() {});
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete, color: Colors.redAccent),
-                                    onPressed: () {
-                                      _deleteCardFromFolder(folderIndex, cardIndex);
-                                      setDetailState(() {});
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              floatingActionButton: FloatingActionButton(
-                backgroundColor: Colors.purple,
-                onPressed: () {
-                  _showCardDialog(context, folderIndex);
-                  setDetailState(() {});
-                },
-                child: const Icon(Icons.add, color: Colors.white),
-              ),
-            );
-          },
-        ),
-      ),
-    ).then((_) => _fetchFoldersData());
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: isError ? Colors.red : Colors.green, duration: const Duration(seconds: 2)),
+    );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -302,21 +244,24 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
         title: const Text('Thư viện Flashcard', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
         leading: widget.onExitPressed != null
             ? IconButton(icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black), onPressed: widget.onExitPressed)
-            : null,
+            : IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded, color: Colors.blue),
-            onPressed: _fetchFoldersData,
+            onPressed: _initAuthAndFetchFlashcards,
           )
         ],
       ),
       body: _buildBody(),
-      floatingActionButton: _isLoading || _errorMessage.isNotEmpty
+      floatingActionButton: _isLoading
           ? null
           : FloatingActionButton(
-        onPressed: () => _showFolderDialog(),
-        backgroundColor: Colors.blue,
-        child: const Icon(Icons.create_new_folder_rounded, color: Colors.white),
+        backgroundColor: Colors.purple,
+        onPressed: () => _openFlashcardFormDialog(),
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
       ),
     );
   }
@@ -334,7 +279,7 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
               child: Text(_errorMessage, style: const TextStyle(color: Colors.red), textAlign: TextAlign.center),
             ),
             const SizedBox(height: 12),
-            ElevatedButton(onPressed: _fetchFoldersData, child: const Text('Thử lại')),
+            ElevatedButton(onPressed: _initAuthAndFetchFlashcards, child: const Text('Thử lại')),
           ],
         ),
       );
@@ -345,51 +290,126 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Học phần của bạn', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text('Danh sách thẻ học chương này', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
+
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton.icon(
+              onPressed: _flashcards.isEmpty
+                  ? null
+                  : () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const VocabularyChapterScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
+              label: const Text('Bắt đầu học lật thẻ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.purple,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
           Expanded(
-            child: _folders.isEmpty
-                ? const Center(child: Text('Chưa có học phần nào. Nhấn (+) để tạo mới nhé!'))
+            child: _flashcards.isEmpty
+                ? const Center(child: Text('Không có thẻ học nào trong chương này.'))
                 : ListView.separated(
-              itemCount: _folders.length,
+              itemCount: _flashcards.length,
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
-                final folder = _folders[index];
-                final List cards = folder['flashcards'] ?? [];
+                final card = _flashcards[index];
 
                 return Card(
                   color: Colors.white,
                   elevation: 2,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  child: InkWell(
-                    onTap: () => _openFolderDetail(index),
-                    borderRadius: BorderRadius.circular(14),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(color: Colors.purple.withOpacity(0.1), shape: BoxShape.circle),
-                            child: const Icon(Icons.folder_special_rounded, color: Colors.purple, size: 28),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(color: Colors.purple.withOpacity(0.1), shape: BoxShape.circle),
+                          child: const Icon(Icons.style_rounded, color: Colors.purple, size: 24),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(card['word'] ?? card['front'] ?? '', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 4),
+                              if (card['furigana'] != null && card['furigana'].toString().isNotEmpty)
+                                Text('Cách đọc: ${card['furigana']}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                              const SizedBox(height: 4),
+                              Text('Nghĩa: ${card['meaning'] ?? card['back'] ?? ''}', style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                            ],
                           ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(folder['title'] ?? '', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 4),
-                                Text(folder['description'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                                const SizedBox(height: 6),
-                                Text('${cards.length} thuật ngữ', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.blue)),
+                        ),
+                        const SizedBox(width: 8),
+
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            if (card['status'] != null)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: card['status'] == "MEMORIZED" ? Colors.green.withOpacity(0.1) : Colors.amber.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  card['status'] == "MEMORIZED" ? "Đã thuộc" : "Chưa thuộc",
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: card['status'] == "MEMORIZED" ? Colors.green : Colors.amber[800]
+                                  ),
+                                ),
+                              ),
+
+                            PopupMenuButton<String>(
+                              icon: const Icon(Icons.more_vert_rounded, color: Colors.grey),
+                              onSelected: (value) {
+                                if (value == 'edit') {
+                                  _openFlashcardFormDialog(selectedCard: card);
+                                } else if (value == 'delete') {
+                                  _confirmDeleteFlashcard(card['id']);
+                                }
+                              },
+                              itemBuilder: (BuildContext context) => [
+                                const PopupMenuItem(
+                                  value: 'edit',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.edit_rounded, color: Colors.blue, size: 20),
+                                      SizedBox(width: 8),
+                                      Text('Sửa thẻ'),
+                                    ],
+                                  ),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'delete',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.delete_forever_rounded, color: Colors.red, size: 20),
+                                      SizedBox(width: 8),
+                                      Text('Xóa thẻ'),
+                                    ],
+                                  ),
+                                ),
                               ],
                             ),
-                          ),
-                          IconButton(icon: const Icon(Icons.edit_note, color: Colors.grey), onPressed: () => _showFolderDialog(index: index)),
-                          IconButton(icon: const Icon(Icons.delete_outline, color: Colors.redAccent), onPressed: () => _deleteFolder(index)),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 );

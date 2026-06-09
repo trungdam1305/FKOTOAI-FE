@@ -5,100 +5,84 @@ import '../../domain/repositories/flashcard_repository.dart';
 
 class FlashcardRepositoryImpl implements FlashcardRepository {
 
-  @override
-  Future<Map<String, dynamic>> getFlashcards(String token) async {
+  String _getStudentIdFromToken(String token) {
     try {
-      final response = await http.get(
-        Uri.parse(ApiConstants.flashcardEndpoint),
-        headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
-      );
-      if (response.statusCode == 200) return jsonDecode(response.body) as Map<String, dynamic>;
-      throw Exception('Không thể tải bộ Flashcard (${response.statusCode})');
-    } catch (e) { throw Exception('Lỗi kết nối hệ thống: $e'); }
+      final parts = token.split('.');
+      if (parts.length != 3) return '1';
+
+      final payload = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
+      final Map<String, dynamic> data = jsonDecode(payload);
+
+      if (data['id'] != null) return data['id'].toString();
+      if (data['userId'] != null) return data['userId'].toString();
+
+      return '1';
+    } catch (_) {
+      return '1';
+    }
   }
 
   @override
-  Future<List<dynamic>> fetchCollections(String token) async {
+  Future<Map<String, dynamic>> getFlashcards(String token, {int chapterId = 1}) async {
     try {
-      final response = await http.get(
-        Uri.parse(ApiConstants.flashcardCollectionEndpoint),
-        headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
-      );
-      if (response.statusCode == 200) {
-        final dynamic responseData = jsonDecode(response.body);
-        return responseData is List ? responseData : (responseData['collections'] ?? responseData['folders'] ?? []);
+      final studentId = _getStudentIdFromToken(token);
+      if (studentId.isEmpty) {
+        throw Exception('Không tìm thấy ID người dùng hợp lệ trong mã xác thực!');
       }
-      throw Exception('Lỗi tải danh sách bộ học phần (${response.statusCode})');
-    } catch (e) { throw Exception('Lỗi kết nối: $e'); }
+
+      final dynamicUrl = '${ApiConstants.flashcardByChapterEndpoint}/$chapterId?studentId=$studentId';
+
+      final response = await http.get(
+        Uri.parse(dynamicUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json'
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        if (data['code'] == 200) return data;
+        throw Exception(data['message'] ?? 'Lấy bộ Flashcard thất bại');
+      }
+      throw Exception('Không thể tải bộ Flashcard (${response.statusCode})');
+    } catch (e) {
+      throw Exception('Lỗi kết nối hệ thống Flashcard: $e');
+    }
   }
 
   @override
-  Future<void> createCollection(String token, String title, String desc) async {
+  Future<void> submitCardReview(String token, int flashcardId, String status) async {
     try {
+      final studentId = _getStudentIdFromToken(token);
+      if (studentId.isEmpty) {
+        throw Exception('Không tìm thấy ID người dùng hợp lệ trong mã xác thực!');
+      }
+
+      final dynamicUrl = '${ApiConstants.flashcardReviewEndpoint}?studentId=$studentId';
+
       final response = await http.post(
-        Uri.parse(ApiConstants.flashcardCollectionEndpoint),
-        headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
-        body: jsonEncode({"title": title, "description": desc, "flashcards": []}),
+        Uri.parse(dynamicUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json'
+        },
+        body: jsonEncode({
+          "flashcardId": flashcardId,
+          "status": status
+        }),
       );
-      if (response.statusCode != 200 && response.statusCode != 201) throw Exception('Thất bại');
-    } catch (e) { throw Exception('Lỗi tạo bộ học phần: $e'); }
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        if (data['code'] == 200) return;
+        throw Exception(data['message'] ?? 'Gửi kết quả học tập thất bại');
+      }
+      throw Exception('Thất bại khi đồng bộ tiến độ (${response.statusCode})');
+    } catch (e) {
+      throw Exception('Lỗi đánh giá thẻ từ: $e');
+    }
   }
 
-  @override
-  Future<void> updateCollection(String token, String id, String title, String desc) async {
-    try {
-      final response = await http.put(
-        Uri.parse('${ApiConstants.flashcardCollectionEndpoint}/$id'),
-        headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
-        body: jsonEncode({"title": title, "description": desc}),
-      );
-      if (response.statusCode != 200) throw Exception('Thất bại');
-    } catch (e) { throw Exception('Lỗi cập nhật bộ học phần: $e'); }
-  }
 
-  @override
-  Future<void> deleteCollection(String token, String id) async {
-    try {
-      final response = await http.delete(
-        Uri.parse('${ApiConstants.flashcardCollectionEndpoint}/$id'),
-        headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
-      );
-      if (response.statusCode != 200) throw Exception('Thất bại');
-    } catch (e) { throw Exception('Lỗi xóa bộ học phần: $e'); }
-  }
-
-  @override
-  Future<void> addCard(String token, String folderId, Map<String, String> cardData) async {
-    try {
-      final response = await http.post(
-        Uri.parse('${ApiConstants.flashcardCollectionEndpoint}/$folderId/cards'),
-        headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
-        body: jsonEncode(cardData),
-      );
-      if (response.statusCode != 200 && response.statusCode != 201) throw Exception('Thất bại');
-    } catch (e) { throw Exception('Lỗi thêm thẻ từ: $e'); }
-  }
-
-  @override
-  Future<void> updateCard(String token, String folderId, String cardId, Map<String, String> cardData) async {
-    try {
-      final response = await http.put(
-        Uri.parse('${ApiConstants.flashcardCollectionEndpoint}/$folderId/cards/$cardId'),
-        headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
-        body: jsonEncode(cardData),
-      );
-      if (response.statusCode != 200) throw Exception('Thất bại');
-    } catch (e) { throw Exception('Lỗi sửa thẻ từ: $e'); }
-  }
-
-  @override
-  Future<void> deleteCard(String token, String folderId, String cardId) async {
-    try {
-      final response = await http.delete(
-        Uri.parse('${ApiConstants.flashcardCollectionEndpoint}/$folderId/cards/$cardId'),
-        headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
-      );
-      if (response.statusCode != 200) throw Exception('Thất bại');
-    } catch (e) { throw Exception('Lỗi xóa thẻ từ: $e'); }
-  }
 }

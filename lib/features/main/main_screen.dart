@@ -4,7 +4,7 @@ import 'package:bim/features/profile/presentation/screens/profile_screen.dart';
 import '../quiz/presentation/quiz_tab.dart';
 import 'package:bim/features/authentication/presentation/controllers/auth_controller.dart';
 import 'package:bim/features/authentication/presentation/screens/login_screen.dart';
-import 'package:bim/features/flashcard/presentation/screens/flashcard_learning_screen.dart';
+import 'package:bim/features/flashcard/presentation/screens/VocabularyChapterScreen.dart';
 import 'package:bim/features/flashcard/presentation/screens/flashcard_dashboard_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -56,7 +56,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     final List<Widget> screens = [
       const StudentHomeScreen(),
-      FlashcardDashboardScreen(
+      VocabularyChapterScreen(
         onExitPressed: () {
           setState(() {
             _selectedIndex = 0;

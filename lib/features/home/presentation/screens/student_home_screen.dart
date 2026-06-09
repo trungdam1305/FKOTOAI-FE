@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import '../controllers/home_controller.dart';
 import 'package:bim/features/authentication/data/auth_local_data_source.dart';
-import 'package:bim/features/flashcard/presentation/screens/flashcard_learning_screen.dart';
-import 'package:bim/features/flashcard/presentation/screens/flashcard_dashboard_screen.dart';
+import 'package:bim/features/flashcard/presentation/screens/VocabularyChapterScreen.dart';
+import 'package:bim/features/flashcard/presentation/screens/progress_screen.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -26,7 +26,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     _fetchHomeData();
   }
 
-  // Khởi chạy hàm bất đồng bộ để đọc Token bảo mật từ bộ nhớ thiết bị
   void _fetchHomeData() async {
     if (!mounted) return;
     setState(() {
@@ -35,7 +34,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     });
 
     try {
-      // 1. Lấy Token thật từ bộ nhớ FlutterSecureStorage
       final String? userToken = await _authLocalDataSource.getToken();
 
       if (userToken == null || userToken.isEmpty) {
@@ -112,14 +110,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
     if (_dashboardData == null) return const Center(child: Text('Không có dữ liệu hiển thị.'));
 
-
     final String name = _homeController.studentName;
     final double progress = _homeController.overallProgress;
-
-
     final String level = _dashboardData!['continueChapter'] != null ? 'N5' : 'N4';
-
-
     final List recentQuizzes = _dashboardData!['recentQuizzes'] ?? [];
 
     return SingleChildScrollView(
@@ -127,12 +120,14 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           _buildHeader(name, level),
           const SizedBox(height: 24),
 
-
-          _buildProgressCard(progress, level),
+          InkWell(
+            onTap: _navigateToProgressScreen,
+            borderRadius: BorderRadius.circular(16),
+            child: _buildProgressCard(progress, level),
+          ),
           const SizedBox(height: 24),
 
           _buildSectionTitle('Tính năng hệ thống'),
@@ -263,7 +258,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
-              // Đảm bảo giá trị thanh tiến độ luôn nằm trong khoảng 0.0 -> 1.0 đúng quy định Flutter
               value: progress > 1.0 ? progress / 100 : progress,
               minHeight: 10,
               backgroundColor: Colors.grey[200],
@@ -288,15 +282,14 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const FlashcardDashboardScreen(),
+              builder: (context) => const VocabularyChapterScreen(),
             ),
           );
         }),
         _buildFeatureItem(Icons.quiz_rounded, 'Online Quiz', Colors.orange, () {
-          // Điều hướng sang màn Quiz khi hoàn thiện tính năng
         }),
         _buildFeatureItem(Icons.analytics_rounded, 'Dashboard', Colors.teal, () {
-          // Điều hướng sang màn Dashboard báo cáo chi tiết
+          _navigateToProgressScreen();
         }),
       ],
     );
@@ -324,6 +317,17 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
               textAlign: TextAlign.center,
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _navigateToProgressScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProgressScreen(
+          studentId: _dashboardData?['studentId']?.toString() ?? '',
         ),
       ),
     );

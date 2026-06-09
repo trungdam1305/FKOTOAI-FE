@@ -14,7 +14,7 @@ class HomeController {
   int streakCount = 0;
   int nationalRank = 0;
   double overallProgress = 0.0;
-  String studentName = "Học viên"; //
+  String studentName = "Học viên";
 
   bool isLoading = false;
 

@@ -1,4 +1,4 @@
-// Flashcard Controller (Riverpod Notifier)
+
 import '../../data/repositories/flashcard_repository_impl.dart';
 import '../../domain/repositories/flashcard_repository.dart';
 
