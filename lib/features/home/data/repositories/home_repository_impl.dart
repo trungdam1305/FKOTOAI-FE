@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:bim/core/constants/api_constants.dart';
@@ -14,7 +13,10 @@ class HomeRepositoryImpl implements HomeRepository {
       final payload = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
       final Map<String, dynamic> data = jsonDecode(payload);
 
-      return (data['id'] ?? data['userId'] ?? data['sub'] ?? '1').toString();
+      if (data['id'] != null) return data['id'].toString();
+      if (data['userId'] != null) return data['userId'].toString();
+
+      return '1';
     } catch (_) {
       return '1';
     }
@@ -25,23 +27,36 @@ class HomeRepositoryImpl implements HomeRepository {
     try {
       final studentId = _getStudentIdFromToken(token);
 
+      if (studentId.isEmpty) {
+        throw Exception('Không tìm thấy ID người dùng hợp lệ trong mã xác thực!');
+      }
+
       final dynamicUrl = '${ApiConstants.baseUrl}/api/v1/students/$studentId/home';
 
       final response = await http.get(
         Uri.parse(dynamicUrl),
         headers: {
-          'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
         },
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
+        if (response.body.isNotEmpty) {
+          final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+          if (data['code'] == 8386 && data['result'] != null) {
+            return data['result'] as Map<String, dynamic>;
+          } else {
+            throw Exception(data['message'] ?? 'Lấy dữ liệu trang chủ thất bại!');
+          }
+        }
+        throw Exception('Dữ liệu trang chủ trả về từ máy chủ trống rỗng!');
       } else {
-        throw Exception('Không thể tải dữ liệu (${response.statusCode})');
+        throw Exception('Không thể tải dữ liệu trang chủ (Mã lỗi: ${response.statusCode})');
       }
     } catch (e) {
-      throw Exception('Lỗi kết nối hệ thống: $e');
+      throw Exception('Lỗi kết nối hệ thống trang chủ: $e');
     }
   }
 }

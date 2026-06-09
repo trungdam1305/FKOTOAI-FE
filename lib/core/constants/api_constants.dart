@@ -10,15 +10,14 @@ class ApiConstants {
   static const String resetPasswordEndpoint = '$baseUrl/api/auth/reset-password';
   static const String logoutEndpoint = '$baseUrl/api/auth/logout';
 
-
   //home
-  static const String dashboardEndpoint = '$baseUrl/api/home/dashboard';
+  static String dashboardEndpoint(Object studentId) => '$baseUrl/api/v1/students/$studentId/home';
 
   //flashcard
   static const String flashcardEndpoint = '$baseUrl/api/flashcard/learning';
   static const String flashcardCollectionEndpoint = '$baseUrl/api/flashcard/collection';
 
   //profile
-  static const String profileEndpoint = '$baseUrl/api/auth/view-profile';
-  static const String updateProfileEndpoint = '$baseUrl/api/auth/update-profile';
+  static String profileEndpoint(Object studentId) => '$baseUrl/student/$studentId';
+  static const String updateProfileEndpoint = '$baseUrl/student/update-profile';
 }

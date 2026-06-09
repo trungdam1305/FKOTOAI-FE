@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import '../controllers/home_controller.dart';
+import 'package:bim/features/authentication/data/auth_local_data_source.dart';
 import 'package:bim/features/flashcard/presentation/screens/flashcard_learning_screen.dart';
 import 'package:bim/features/flashcard/presentation/screens/flashcard_dashboard_screen.dart';
 
@@ -11,8 +13,9 @@ class StudentHomeScreen extends StatefulWidget {
 }
 
 class _StudentHomeScreenState extends State<StudentHomeScreen> {
-
   final HomeController _homeController = HomeController();
+  final AuthLocalDataSource _authLocalDataSource = AuthLocalDataSource();
+
   Map<String, dynamic>? _dashboardData;
   String _errorMessage = '';
   bool _isLoading = false;
@@ -23,21 +26,52 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     _fetchHomeData();
   }
 
-  void _fetchHomeData() {
-    String userToken = "dummy_user_token";
-    _homeController.getDashboard(
-      token: userToken,
-      onLoading: () => setState(() { _isLoading = true; _errorMessage = ''; }),
-      onSuccess: (data) {
+  // Khởi chạy hàm bất đồng bộ để đọc Token bảo mật từ bộ nhớ thiết bị
+  void _fetchHomeData() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    try {
+      // 1. Lấy Token thật từ bộ nhớ FlutterSecureStorage
+      final String? userToken = await _authLocalDataSource.getToken();
+
+      if (userToken == null || userToken.isEmpty) {
+        if (!mounted) return;
         setState(() {
           _isLoading = false;
-          _dashboardData = data;
-
-          _homeController.homeFlashcards = data['flashcards'] ?? [];
+          _errorMessage = 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!';
         });
-      },
-      onError: (error) => setState(() { _isLoading = false; _errorMessage = error; }),
-    );
+        return;
+      }
+
+      _homeController.getDashboard(
+        token: userToken,
+        onLoading: () {},
+        onSuccess: (data) {
+          if (!mounted) return;
+          setState(() {
+            _isLoading = false;
+            _dashboardData = data;
+          });
+        },
+        onError: (error) {
+          if (!mounted) return;
+          setState(() {
+            _isLoading = false;
+            _errorMessage = error;
+          });
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Lỗi đọc mã xác thực hệ thống: $e';
+      });
+    }
   }
 
   @override
@@ -58,9 +92,19 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(_errorMessage, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w500)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Text(
+                _errorMessage,
+                style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
+                textAlign: TextAlign.center,
+              ),
+            ),
             const SizedBox(height: 16),
-            ElevatedButton(onPressed: _fetchHomeData, child: const Text('Thử tải lại')),
+            ElevatedButton(
+              onPressed: _fetchHomeData,
+              child: const Text('Thử tải lại'),
+            ),
           ],
         ),
       );
@@ -68,50 +112,47 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
     if (_dashboardData == null) return const Center(child: Text('Không có dữ liệu hiển thị.'));
 
-    final data = _dashboardData!;
-    final List recommendedLessons = data['recommendedLessons'] ?? [];
-    final List recentActivities = data['recentActivities'] ?? [];
+
+    final String name = _homeController.studentName;
+    final double progress = _homeController.overallProgress;
+
+
+    final String level = _dashboardData!['continueChapter'] != null ? 'N5' : 'N4';
+
+
+    final List recentQuizzes = _dashboardData!['recentQuizzes'] ?? [];
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(data['studentName'] ?? 'Học viên', data['currentLevel'] ?? 'N3'),
+
+          _buildHeader(name, level),
           const SizedBox(height: 24),
 
-          // 1. VIEW LEARNING PROGRESS
-          _buildProgressCard((data['overallProgress'] ?? 0.0).toDouble(), data['currentLevel'] ?? 'N3'),
+
+          _buildProgressCard(progress, level),
           const SizedBox(height: 24),
 
-          // 2. NAVIGATE LEARNING FEATURES (Quick Access Buttons)
-          _buildFeatureItem(Icons.style_rounded, 'Flashcards', Colors.purple, () {
-            if (!mounted) return;
+          _buildSectionTitle('Tính năng hệ thống'),
+          const SizedBox(height: 12),
+          _buildFeatureGrid(),
+          const SizedBox(height: 24),
 
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const FlashcardDashboardScreen(),
+          _buildSectionTitle('Bài kiểm tra gần đây (Quiz)'),
+          const SizedBox(height: 12),
+          recentQuizzes.isEmpty
+              ? const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(
+              child: Text(
+                'Bạn chưa thực hiện bài Quiz nào gần đây.',
+                style: TextStyle(color: Colors.grey, fontSize: 13),
               ),
-            );
-          }),
-
-          // 3. VIEW RECOMMENDED LESSONS
-          _buildSectionTitle('Gợi ý học tập dành riêng cho bạn'),
-          const SizedBox(height: 12),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: recommendedLessons.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) => _buildLessonItem(recommendedLessons[index]),
-          ),
-          const SizedBox(height: 28),
-
-          // 4. VIEW RECENT ACTIVITIES
-          _buildSectionTitle('Hoạt động gần đây'),
-          const SizedBox(height: 12),
-          Container(
+            ),
+          )
+              : Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -121,9 +162,37 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             child: ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: recentActivities.length,
+              itemCount: recentQuizzes.length,
               separatorBuilder: (_, __) => const Divider(height: 24),
-              itemBuilder: (context, index) => _buildActivityItem(recentActivities[index]),
+              itemBuilder: (context, index) {
+                final item = recentQuizzes[index];
+                return Row(
+                  children: [
+                    const Icon(Icons.quiz_outlined, color: Colors.orange, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Loại kiểm tra: ${item['attemptType'] ?? 'N/A'}',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Kết quả: ${item['passFail'] ?? 'N/A'} - Đúng ${item['correctCount'] ?? 0}/${item['totalQuestions'] ?? 0}',
+                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      'Điểm: ${item['score'] ?? '0'}',
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blue),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ],
@@ -152,21 +221,28 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
-          child: Text(level, style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 13)),
+          decoration: BoxDecoration(
+            color: Colors.blue.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            level,
+            style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 13),
+          ),
         ),
       ],
     );
   }
 
-  // 1. Widget View Progress Card
   Widget _buildProgressCard(double progress, String level) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,14 +253,18 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Mục tiêu khóa $level', style: const TextStyle(fontSize: 13, color: Colors.grey)),
-              Text('${(progress * 100).toInt()}% Hoàn thành', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.blue)),
+              Text(
+                '${(progress > 1.0 ? progress : progress * 100).toInt()}% Hoàn thành',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.blue),
+              ),
             ],
           ),
           const SizedBox(height: 8),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
-              value: progress,
+              // Đảm bảo giá trị thanh tiến độ luôn nằm trong khoảng 0.0 -> 1.0 đúng quy định Flutter
+              value: progress > 1.0 ? progress / 100 : progress,
               minHeight: 10,
               backgroundColor: Colors.grey[200],
               valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
@@ -195,7 +275,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     );
   }
 
-  // 2. Widget Navigate Features Grid (Bao gồm Access Flashcard, Quiz, Dashboard)
   Widget _buildFeatureGrid() {
     return GridView.count(
       crossAxisCount: 3,
@@ -214,8 +293,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           );
         }),
         _buildFeatureItem(Icons.quiz_rounded, 'Online Quiz', Colors.orange, () {
+          // Điều hướng sang màn Quiz khi hoàn thiện tính năng
         }),
         _buildFeatureItem(Icons.analytics_rounded, 'Dashboard', Colors.teal, () {
+          // Điều hướng sang màn Dashboard báo cáo chi tiết
         }),
       ],
     );
@@ -237,62 +318,14 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           children: [
             Icon(icon, color: color, size: 28),
             const SizedBox(height: 8),
-            Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color), textAlign: TextAlign.center),
+            Text(
+              label,
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildLessonItem(Map<String, dynamic> lesson) {
-    final String title = lesson['title'] ?? 'Không có tiêu đề';
-    final String reason = lesson['reason'] ?? 'Gợi ý cho bạn';
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withOpacity(0.15)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-            child: const Icon(Icons.auto_awesome_rounded, color: Colors.blue, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 2),
-                Text(reason, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-              ],
-            ),
-          ),
-          const Icon(Icons.play_circle_outline_rounded, color: Colors.blue),
-        ],
-      ),
-    );
-  }
-
-  // 4. Widget View Recent Activities Item
-  Widget _buildActivityItem(Map<String, dynamic> activity) {
-    final String action = activity['action'] ?? '';
-    final String time = activity['time'] ?? '';
-
-    return Row(
-      children: [
-        const Icon(Icons.history_toggle_off_rounded, color: Colors.grey, size: 20),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(action, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-        ),
-        Text(time, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-      ],
     );
   }
 }

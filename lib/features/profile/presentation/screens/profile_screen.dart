@@ -11,7 +11,6 @@ class ProfileTab extends StatefulWidget {
 
 class _ProfileTabState extends State<ProfileTab> {
   final ProfileController _controller = ProfileController();
-  // final String _token = "dummy_user_token";
 
   final Color primaryBlue = const Color(0xFF3B40E8);
   final Color textBlack = const Color(0xFF2D2D2D);
@@ -21,7 +20,6 @@ class _ProfileTabState extends State<ProfileTab> {
   @override
   void initState() {
     super.initState();
-    //_controller.loadProfileData(_token);
     _controller.loadProfileData();
   }
 
@@ -43,7 +41,10 @@ class _ProfileTabState extends State<ProfileTab> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(_controller.errorMessage, style: _txt(), textAlign: TextAlign.center),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Text(_controller.errorMessage, style: _txt(), textAlign: TextAlign.center),
+                ),
                 const SizedBox(height: 12),
                 ElevatedButton(
                   onPressed: () {
@@ -63,8 +64,6 @@ class _ProfileTabState extends State<ProfileTab> {
         final p = _controller.profile;
         if (p == null) return const Center(child: Text('Không có dữ liệu'));
 
-        final stepsLeft = p['stepsLeftToComplete'] ?? 0;
-
         return SingleChildScrollView(
           child: Column(
             children: [
@@ -75,19 +74,13 @@ class _ProfileTabState extends State<ProfileTab> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 16),
-                    Center(child: Text(p['fullName'] ?? '', style: _txt(size: 24, weight: FontWeight.w900))),
+                    Center(child: Text(p['fullname'] ?? 'Học viên', style: _txt(size: 24, weight: FontWeight.w900))),
                     const SizedBox(height: 4),
-                    Center(child: Text('${p['username'] ?? ''} • Tham gia ${p['joinedDate'] ?? ''}', style: _txt(isGrey: true))),
+                    Center(child: Text(p['email'] ?? '', style: _txt(isGrey: true))),
                     const SizedBox(height: 24),
                     _buildStatsRow(p),
-                    const SizedBox(height: 24),
-                    _buildActionButtons(),
-                    if (stepsLeft > 0) ...[
-                      const SizedBox(height: 32),
-                      _buildPromoBanner(stepsLeft),
-                    ],
                     const SizedBox(height: 32),
-                    _buildSectionTitle('Tổng quan', Icons.bar_chart_rounded, Colors.purple.shade400),
+                    _buildSectionTitle('Thông tin học tập', Icons.bar_chart_rounded, Colors.purple.shade400),
                     const SizedBox(height: 16),
                     _buildOverviewGrid(p),
                     const SizedBox(height: 40),
@@ -116,7 +109,15 @@ class _ProfileTabState extends State<ProfileTab> {
             child: Container(
               width: 110, height: 110,
               decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: borderColor, width: 3)),
-              child: Center(child: Image.network(avatarUrl, width: 70, height: 70, fit: BoxFit.contain)),
+              child: ClipOval(
+                child: Image.network(
+                  avatarUrl,
+                  width: 110,
+                  height: 110,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Icon(Icons.person, size: 50, color: textGrey),
+                ),
+              ),
             ),
           ),
         ],
@@ -139,86 +140,9 @@ class _ProfileTabState extends State<ProfileTab> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          statCol('🇯🇵', '+${p['coursesCount'] ?? 0}', 'Khóa học'),
+          statCol('🔥', '${p['streakCount'] ?? 0} Ngày', 'Chuỗi liên tục'),
           Container(width: 1.5, height: 40, color: borderColor),
-          statCol('👥', '${p['followingCount'] ?? 0}', 'Đang theo dõi'),
-          Container(width: 1.5, height: 40, color: borderColor),
-          statCol('🌟', '${p['followersCount'] ?? 0}', 'Người theo dõi'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () {},
-            icon: Icon(Icons.person_add_alt_1_rounded, color: textBlack, size: 18),
-            label: Text('Thêm bạn', style: _txt(size: 15, weight: FontWeight.w800)),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              side: BorderSide(color: borderColor, width: 2),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              backgroundColor: Colors.white,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        OutlinedButton(
-          onPressed: () {},
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.all(12),
-            side: BorderSide(color: borderColor, width: 2),
-            shape: const CircleBorder(),
-            backgroundColor: Colors.white,
-          ),
-          child: Icon(Icons.ios_share_rounded, color: textBlack, size: 20),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPromoBanner(int steps) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.orange.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.orange.withOpacity(0.2), width: 2),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const Text('🦉', style: TextStyle(fontSize: 40)),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Hoàn thiện hồ sơ', style: _txt(size: 17, weight: FontWeight.w800)),
-                    const SizedBox(height: 4),
-                    Text('Còn $steps bước nữa thôi!', style: _txt(size: 13, isGrey: true)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                backgroundColor: Colors.orange.shade500, elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              ),
-              child: const Text('Cập nhật ngay', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white, fontFamily: 'Nunito')),
-            ),
-          ),
+          statCol('⚡', '${p['rankPoints'] ?? 1000}', 'Điểm hạng'),
         ],
       ),
     );
@@ -263,10 +187,8 @@ class _ProfileTabState extends State<ProfileTab> {
       crossAxisCount: 2, crossAxisSpacing: 16, mainAxisSpacing: 16, childAspectRatio: 1.8,
       shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
       children: [
-        card('🔥', '${p['streakDays'] ?? 0}', 'Chuỗi ngày'),
-        card('⚡', '${p['totalXp'] ?? 0}', 'Tổng XP'),
-        card('🛡️', p['currentLeague'] ?? 'Chưa có giải', 'Giải đấu'),
-        card('🎯', p['learningGoal'] ?? 'Chưa đặt mục tiêu', 'Mục tiêu'),
+        card('🛡️', p['currentLevel'] ?? 'N5', 'Trình độ hiện tại'),
+        card('🆔', '${p['studentId'] ?? ''}', 'Mã số học viên'),
       ],
     );
   }
