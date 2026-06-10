@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:bim/features/authentication/data/auth_local_data_source.dart';
 import 'package:bim/features/flashcard/data/repositories/flashcard_repository_impl.dart';
 import 'VocabularyChapterScreen.dart';
+import 'VocabularyScreen.dart';
 
 class FlashcardDashboardScreen extends StatefulWidget {
   final VoidCallback? onExitPressed;
@@ -65,11 +66,12 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
 
   Future<void> _fetchFlashcardsData() async {
     try {
-      final responseData = await _flashcardRepo.getFlashcards(_realToken, chapterId: widget.chapterId);
+      final List<dynamic> data = await _flashcardRepo.getVocabsInChapter(_realToken, widget.chapterId);
 
       if (!mounted) return;
+
       setState(() {
-        _flashcards = responseData['result'] ?? [];
+        _flashcards = data;
         _isLoading = false;
       });
     } catch (e) {
@@ -85,22 +87,10 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
   Future<void> _createFlashcard(String word, String furigana, String meaning) async {
     setState(() => _isLoading = true);
     try {
-      // final response = await _flashcardRepo.createFlashcard(_realToken, chapterId: widget.chapterId, ...);
+      final response = await _flashcardRepo.addVocabToChapter(_realToken, widget.chapterId, word, meaning);
 
-      await Future.delayed(const Duration(milliseconds: 500));
+      await _fetchFlashcardsData();
 
-      final newCard = {
-        'id': DateTime.now().millisecondsSinceEpoch,
-        'word': word,
-        'furigana': furigana,
-        'meaning': meaning,
-        'status': 'NEW'
-      };
-
-      setState(() {
-        _flashcards.insert(0, newCard);
-        _isLoading = false;
-      });
       _showSnackBar('Thêm thẻ từ vựng mới thành công!');
     } catch (e) {
       setState(() => _isLoading = false);
@@ -109,46 +99,33 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
   }
 
   // [UPDATE] Flashcard
-  Future<void> _updateFlashcard(dynamic cardId, String word, String furigana, String meaning) async {
+  Future<void> _updateFlashcard(dynamic vocabId, String word, String furigana, String meaning) async {
     setState(() => _isLoading = true);
     try {
-      // final response = await _flashcardRepo.updateFlashcard(_realToken, cardId: cardId, ...);
+      await _flashcardRepo.updateVocabInChapter(_realToken, widget.chapterId, vocabId, word, meaning);
 
-      await Future.delayed(const Duration(milliseconds: 500));
+      await _fetchFlashcardsData();
 
-
-      setState(() {
-        final index = _flashcards.indexWhere((element) => element['id'] == cardId);
-        if (index != -1) {
-          _flashcards[index]['word'] = word;
-          _flashcards[index]['furigana'] = furigana;
-          _flashcards[index]['meaning'] = meaning;
-        }
-        _isLoading = false;
-      });
-      _showSnackBar('Cập nhật thẻ từ vựng thành công!');
+      _showSnackBar('Cập nhật thẻ thành công!');
     } catch (e) {
       setState(() => _isLoading = false);
-      _showSnackBar('Lỗi cập nhật thẻ: $e', isError: true);
+      _showSnackBar('Lỗi cập nhật: $e', isError: true);
     }
   }
 
   // [DELETE] Flashcard
-  Future<void> _deleteFlashcard(dynamic cardId) async {
-    setState(() => _isLoading = true);
+  Future<void> _deleteFlashcard(dynamic vocabId) async {
     try {
-      // await _flashcardRepo.deleteFlashcard(_realToken, cardId: cardId);
+      await _flashcardRepo.removeVocabFromChapter(_realToken, widget.chapterId, vocabId);
 
-      await Future.delayed(const Duration(milliseconds: 400));
+      await _fetchFlashcardsData();
 
-      setState(() {
-        _flashcards.removeWhere((element) => element['id'] == cardId);
-        _isLoading = false;
-      });
-      _showSnackBar('Đã xóa thẻ học khỏi chương này.');
+      if (mounted) _showSnackBar('Đã xóa thẻ học.');
     } catch (e) {
-      setState(() => _isLoading = false);
-      _showSnackBar('Lỗi xóa thẻ: $e', isError: true);
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showSnackBar('Lỗi xóa thẻ: ${e.toString().replaceAll('Exception: ', '')}', isError: true);
+      }
     }
   }
 
@@ -195,7 +172,7 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
               }
               Navigator.pop(context);
               if (isEditMode) {
-                _updateFlashcard(selectedCard['id'], wordController.text.trim(), furiganaController.text.trim(), meaningController.text.trim());
+                _updateFlashcard(selectedCard['itemId'], wordController.text.trim(), furiganaController.text.trim(), meaningController.text.trim());
               } else {
                 _createFlashcard(wordController.text.trim(), furiganaController.text.trim(), meaningController.text.trim());
               }
@@ -209,6 +186,13 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
 
   // DELETE Flashcard
   void _confirmDeleteFlashcard(dynamic cardId) {
+    final int? id = (cardId is int) ? cardId : int.tryParse(cardId.toString());
+
+    if (id == null) {
+      _showSnackBar('Lỗi: ID thẻ không hợp lệ', isError: true);
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -219,7 +203,7 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              _deleteFlashcard(cardId);
+              _deleteFlashcard(id);
             },
             child: const Text('Xóa', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
           ),
@@ -303,7 +287,7 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const VocabularyChapterScreen(),
+                    builder: (context) => VocabularyScreen(flashcards: _flashcards),
                   ),
                 );
               },
@@ -346,8 +330,8 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
                             children: [
                               Text(card['word'] ?? card['front'] ?? '', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                               const SizedBox(height: 4),
-                              if (card['furigana'] != null && card['furigana'].toString().isNotEmpty)
-                                Text('Cách đọc: ${card['furigana']}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                              if (card['reading'] != null && card['reading'].toString().isNotEmpty)
+                                Text('Cách đọc: ${card['reading']}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
                               const SizedBox(height: 4),
                               Text('Nghĩa: ${card['meaning'] ?? card['back'] ?? ''}', style: const TextStyle(fontSize: 13, color: Colors.black87)),
                             ],
@@ -381,7 +365,7 @@ class _FlashcardDashboardScreenState extends State<FlashcardDashboardScreen> {
                                 if (value == 'edit') {
                                   _openFlashcardFormDialog(selectedCard: card);
                                 } else if (value == 'delete') {
-                                  _confirmDeleteFlashcard(card['id']);
+                                  _confirmDeleteFlashcard(card['itemId']);
                                 }
                               },
                               itemBuilder: (BuildContext context) => [

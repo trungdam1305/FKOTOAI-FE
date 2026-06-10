@@ -6,7 +6,8 @@ import 'package:bim/features/authentication/presentation/controllers/auth_contro
 import 'package:bim/features/authentication/presentation/screens/login_screen.dart';
 import 'package:bim/features/flashcard/presentation/screens/VocabularyChapterScreen.dart';
 import 'package:bim/features/flashcard/presentation/screens/flashcard_dashboard_screen.dart';
-
+import 'package:bim/features/authentication/data/auth_local_data_source.dart';
+import 'package:bim/features/authentication/presentation/screens/login_screen.dart';
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
 
@@ -17,7 +18,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   final Color primaryBlue = const Color(0xFF3B40E8);
   int _selectedIndex = 0;
-
+  final AuthLocalDataSource _authLocalDataSource = AuthLocalDataSource();
   final _authController = AuthController();
   bool _isLoggingOut = false;
 
@@ -27,28 +28,45 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
-  void _handleLogout() {
+  void _handleLogout() async {
+
+    final String? token = await _authLocalDataSource.getToken();
+
+    if (token == null || token.isEmpty) {
+      _navigateToLogin();
+      return;
+    }
+
     _authController.logout(
+      token: token,
       onLoading: () => setState(() => _isLoggingOut = true),
-      onSuccess: () {
+      onSuccess: () async {
         setState(() => _isLoggingOut = false);
 
+        await _authLocalDataSource.deleteToken();
+
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Đã đăng xuất thành công!'), backgroundColor: Colors.blue),
         );
 
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-              (route) => false,
-        );
+        _navigateToLogin();
       },
       onError: (error) {
+        if (!mounted) return;
         setState(() => _isLoggingOut = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(error), backgroundColor: Colors.red),
         );
       },
+    );
+  }
+
+  void _navigateToLogin() {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
     );
   }
 

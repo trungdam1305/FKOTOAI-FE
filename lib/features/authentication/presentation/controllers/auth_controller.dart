@@ -4,8 +4,10 @@ import '../../domain/repositories/auth_repository.dart';
 
 class AuthController {
   final AuthRepository _repository;
+
   AuthController({AuthRepository? repository})
       : _repository = repository ?? AuthRepositoryImpl();
+
   //login
   final AuthRepository _authRepository = AuthRepositoryImpl();
 
@@ -74,7 +76,6 @@ class AuthController {
 
 
   //forget password
-  // 1. Gửi yêu cầu mã OTP qua Email
   Future<void> sendPasswordResetOTP({
     required String email,
     required Function() onLoading,
@@ -127,13 +128,14 @@ class AuthController {
 
   //logout
   Future<void> logout({
+    required String token,
     required Function() onLoading,
     required Function() onSuccess,
     required Function(String error) onError,
   }) async {
     onLoading();
     try {
-      await _repository.logout();
+      await _repository.logout(token);
       onSuccess();
     } catch (e) {
       onError(e.toString().replaceAll('Exception: ', ''));

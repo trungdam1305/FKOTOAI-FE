@@ -87,7 +87,7 @@ class AuthRepositoryImpl implements AuthRepository {
   //forget password
   @override
   Future<void> sendForgotPasswordOTP(String email) async {
-    final url = Uri.parse('https://0f510d00-6191-4436-a141-66c5fb3f52a6.mock.pstmn.io/api/auth/forget-password');
+    final url = Uri.parse(ApiConstants.forgotPasswordEndpoint);
 
     final response = await http.post(
       url,
@@ -102,7 +102,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> verifyOTP(String email, String otp) async {
-    final url = Uri.parse('https://0f510d00-6191-4436-a141-66c5fb3f52a6.mock.pstmn.io/api/auth/verify-otp');
+    final url = Uri.parse(ApiConstants.verifyOtpEndpoint);
 
     final response = await http.post(
       url,
@@ -120,7 +120,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> resetPassword(String email, String otp, String newPassword) async {
-    final url = Uri.parse('https://0f510d00-6191-4436-a141-66c5fb3f52a6.mock.pstmn.io/api/auth/reset-password');
+    final url = Uri.parse(ApiConstants.resetPasswordEndpoint);
 
     final response = await http.post(
       url,
@@ -137,24 +137,19 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  @override
-  Future<void> logout() async {
-    final url = Uri.parse('https://0f510d00-6191-4436-a141-66c5fb3f52a6.mock.pstmn.io/api/auth/logout');
+  Future<void> logout(String token) async {
+    final url = Uri.parse(ApiConstants.logoutEndpoint);
 
     final response = await http.post(
       url,
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({"token": token}),
     );
 
-    if (response.statusCode == 200) {
-      if (response.body.isEmpty) return;
-
-      final data = jsonDecode(response.body);
-      if (data['success'] == false) {
-        throw Exception(data['message'] ?? 'Đăng xuất thất bại!');
-      }
-    } else {
-      throw Exception('Không thể kết nối đến máy chủ để đăng xuất!');
+    if (response.statusCode != 200) {
+      throw Exception('Đăng xuất thất bại: ${response.body}');
     }
   }
 }

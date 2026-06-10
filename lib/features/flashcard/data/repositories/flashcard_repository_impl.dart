@@ -84,5 +84,101 @@ class FlashcardRepositoryImpl implements FlashcardRepository {
     }
   }
 
+  // --- CRUD Vocabulary Chapter Items ---
 
+  // 1. POST
+  @override
+  Future<Map<String, dynamic>> addVocabToChapter(String token, int chapterId, String word, String meaning) async {
+    final studentId = _getStudentIdFromToken(token);
+    final url = Uri.parse(ApiConstants.vocabItemsEndpoint(chapterId, studentId));
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json'
+      },
+      body: jsonEncode({
+        "word": word,
+        "meaning": meaning,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    }
+    throw Exception('Thêm từ vựng thất bại (${response.statusCode})');
+  }
+
+  // 2. GET
+  @override
+  Future<List<dynamic>> getVocabsInChapter(String token, int chapterId) async {
+    final studentId = _getStudentIdFromToken(token);
+    final url = Uri.parse(ApiConstants.vocabItemsEndpoint(chapterId, studentId));
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json'
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map && decoded.containsKey('result')) {
+        return (decoded['result'] as List<dynamic>?) ?? [];
+      }
+      return [];
+    }
+    throw Exception('Lấy danh sách từ vựng thất bại (${response.statusCode})');
+  }
+
+  // 3. PUT
+  @override
+  Future<void> updateVocabInChapter(String token, int chapterId, int vocabId, String word, String meaning) async {
+    final studentId = _getStudentIdFromToken(token);
+    final url = Uri.parse(ApiConstants.vocabItemDetailEndpoint(chapterId, vocabId, studentId));
+
+    final response = await http.put(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json'
+      },
+      body: jsonEncode({
+        "word": word,
+        "meaning": meaning,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Cập nhật từ vựng thất bại');
+    }
+  }
+
+  //delete
+  @override
+  Future<void> removeVocabFromChapter(String token, int chapterId, int vocabId) async {
+    final studentId = _getStudentIdFromToken(token);
+    final url = Uri.parse(ApiConstants.vocabItemDetailEndpoint(chapterId, vocabId, studentId));
+
+    try {
+      final response = await http.delete(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json'
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return;
+      } else {
+        throw Exception('Failed to delete: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
 }
