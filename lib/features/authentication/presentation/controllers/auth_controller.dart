@@ -4,7 +4,7 @@ import '../../domain/repositories/auth_repository.dart';
 
 class AuthController {
   final AuthRepository _repository;
-
+  String? _resetToken;
   AuthController({AuthRepository? repository})
       : _repository = repository ?? AuthRepositoryImpl();
 
@@ -91,7 +91,7 @@ class AuthController {
     }
   }
 
-  // cf otp
+  //verify otp
   Future<void> verifyResetOTP({
     required String email,
     required String otp,
@@ -101,25 +101,30 @@ class AuthController {
   }) async {
     onLoading();
     try {
-      await _repository.verifyOTP(email, otp);
+      _resetToken = await _repository.verifyOTP(email, otp);
       onSuccess();
     } catch (e) {
       onError(e.toString().replaceAll('Exception: ', ''));
     }
   }
 
-  // 3. Confirm Reset
+  //reset password
   Future<void> confirmPasswordReset({
-    required String email,
-    required String otp,
     required String newPassword,
+    required String confirmPassword,
     required Function() onLoading,
     required Function() onSuccess,
     required Function(String error) onError,
   }) async {
+    if (_resetToken == null) {
+      onError("Phiên xác thực đã hết hạn, vui lòng thực hiện lại từ đầu.");
+      return;
+    }
+
     onLoading();
     try {
-      await _repository.resetPassword(email, otp, newPassword);
+      await _repository.resetPassword(_resetToken!, newPassword, confirmPassword);
+      _resetToken = null;
       onSuccess();
     } catch (e) {
       onError(e.toString().replaceAll('Exception: ', ''));

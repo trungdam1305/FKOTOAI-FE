@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:bim/features/authentication/presentation/controllers/auth_controller.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -10,6 +11,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
 
+  final _authController = AuthController();
   final _emailController = TextEditingController();
   final _otpController = TextEditingController();
   final _newPasswordController = TextEditingController();
@@ -28,55 +30,90 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  void _handleSendOTP() async {
-    if (!_formKey.currentState!.validate()) return;
+  void _handleSendOTP() {
+    // 1. Kiểm tra validate form (chỉ cần thiết ở step 0)
+    if (_currentStep == 0 && !_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 1200));
-    setState(() => _isLoading = false);
+    // 2. Gọi hàm từ controller
+    _authController.sendPasswordResetOTP(
+      email: _emailController.text.trim(),
+      onLoading: () => setState(() => _isLoading = true),
+      onSuccess: () {
+        setState(() => _isLoading = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Mã OTP đã được gửi đến ${_emailController.text}'), backgroundColor: Colors.green),
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Mã OTP đã được gửi thành công!'),
+              backgroundColor: Colors.green
+          ),
+        );
+
+        // 3. Nếu đang ở step 0 thì chuyển sang step 1
+        if (_currentStep == 0) {
+          setState(() => _currentStep = 1);
+        }
+      },
+      onError: (error) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: Colors.red),
+        );
+      },
     );
-
-    setState(() {
-      _currentStep = 1;
-    });
   }
 
-  void _handleVerifyOTP() async {
+  void _handleVerifyOTP() {
+    // Chỉ cần kiểm tra cơ bản, không cần validate toàn bộ form
     if (_otpController.text.trim().length < 4) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập đầy đủ mã OTP'), backgroundColor: Colors.orange),
+        const SnackBar(content: Text('Mã OTP quá ngắn!'), backgroundColor: Colors.orange),
       );
       return;
     }
 
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 1000));
-    setState(() => _isLoading = false);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Xác thực tài khoản thành công!'), backgroundColor: Colors.green),
+    _authController.verifyResetOTP(
+      email: _emailController.text.trim(),
+      otp: _otpController.text.trim(),
+      onLoading: () => setState(() => _isLoading = true),
+      onSuccess: () {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Xác thực OTP thành công!'), backgroundColor: Colors.green),
+        );
+        setState(() => _currentStep = 2);
+      },
+      onError: (error) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: Colors.red),
+        );
+      },
     );
-
-    setState(() {
-      _currentStep = 2;
-    });
   }
 
-  void _handleResetPassword() async {
+  void _handleResetPassword() {
+
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 1500));
-    setState(() => _isLoading = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Đặt lại mật khẩu thành công! Vui lòng đăng nhập lại.'), backgroundColor: Colors.green),
+    _authController.confirmPasswordReset(
+      newPassword: _newPasswordController.text.trim(),
+      confirmPassword: _confirmPasswordController.text.trim(),
+      onLoading: () => setState(() => _isLoading = true),
+      onSuccess: () {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đặt lại mật khẩu thành công!'), backgroundColor: Colors.green),
+        );
+        Navigator.pop(context);
+      },
+      onError: (error) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: Colors.red),
+        );
+      },
     );
-
-    Navigator.pop(context);
   }
 
   @override

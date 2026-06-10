@@ -100,8 +100,9 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  //VERIFY OTP
   @override
-  Future<void> verifyOTP(String email, String otp) async {
+  Future<String> verifyOTP(String email, String otp) async {
     final url = Uri.parse(ApiConstants.verifyOtpEndpoint);
 
     final response = await http.post(
@@ -113,22 +114,30 @@ class AuthRepositoryImpl implements AuthRepository {
       }),
     );
 
-    if (response.statusCode != 200) {
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['code'] == 8386 && data['result'] != null) {
+        return data['result']['resetToken'];
+      }
+      throw Exception('Không nhận được mã xác thực từ server!');
+    } else {
       throw Exception('Mã xác thực OTP không chính xác hoặc đã hết hạn!');
     }
   }
 
+
+  //RESET PASS
   @override
-  Future<void> resetPassword(String email, String otp, String newPassword) async {
+  Future<void> resetPassword(String resetToken, String newPassword, String confirmPassword) async {
     final url = Uri.parse(ApiConstants.resetPasswordEndpoint);
 
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'email': email,
-        'otp': otp,
+        'resetToken': resetToken,
         'newPassword': newPassword,
+        'confirmPassword': confirmPassword
       }),
     );
 

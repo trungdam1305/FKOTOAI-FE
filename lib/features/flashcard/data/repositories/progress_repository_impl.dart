@@ -8,14 +8,19 @@ class ProgressRepositoryImpl implements ProgressRepository {
   String _getStudentIdFromToken(String token) {
     try {
       final parts = token.split('.');
-      if (parts.length != 3) return '1';
+      if (parts.length != 3) return '';
+
       final payload = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
       final Map<String, dynamic> data = jsonDecode(payload);
 
+      if (data['studentID'] != null) return data['studentID'].toString();
+
       if (data['id'] != null) return data['id'].toString();
-      return '1';
+      if (data['userId'] != null) return data['userId'].toString();
+
+      return '';
     } catch (_) {
-      return '1';
+      return '';
     }
   }
 

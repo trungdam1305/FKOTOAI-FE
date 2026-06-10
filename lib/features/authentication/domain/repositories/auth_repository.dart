@@ -12,8 +12,9 @@ abstract class AuthRepository {
 
   //forget password
   Future<void> sendForgotPasswordOTP(String email);
-  Future<void> verifyOTP(String email, String otp);
-  Future<void> resetPassword(String email, String otp, String newPassword);
+  Future<void> resetPassword(String resetToken, String newPassword, String confirmPassword);
+  Future<String> verifyOTP(String email, String otp);
+
 
   //logout
   Future<void> logout(String token);
