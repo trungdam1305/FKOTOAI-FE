@@ -31,10 +31,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   void _handleSendOTP() {
-    // 1. Kiểm tra validate form (chỉ cần thiết ở step 0)
     if (_currentStep == 0 && !_formKey.currentState!.validate()) return;
 
-    // 2. Gọi hàm từ controller
     _authController.sendPasswordResetOTP(
       email: _emailController.text.trim(),
       onLoading: () => setState(() => _isLoading = true),
@@ -48,7 +46,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
         );
 
-        // 3. Nếu đang ở step 0 thì chuyển sang step 1
         if (_currentStep == 0) {
           setState(() => _currentStep = 1);
         }
@@ -63,7 +60,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   void _handleVerifyOTP() {
-    // Chỉ cần kiểm tra cơ bản, không cần validate toàn bộ form
     if (_otpController.text.trim().length < 4) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Mã OTP quá ngắn!'), backgroundColor: Colors.orange),
@@ -119,51 +115,59 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Khôi phục mật khẩu'),
-      ),
+      appBar: AppBar(title: const Text('Khôi phục mật khẩu')),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  _currentStep == 0
-                      ? Icons.mark_email_read_outlined
-                      : _currentStep == 1
-                      ? Icons.lock_clock_outlined
-                      : Icons.published_with_changes_rounded,
-                  size: 80,
-                  color: Colors.blue,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/images/lo.png',
+                      height: 100,
+                      width: 100,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: 24),
+
+                    if (_currentStep == 0) _buildEmailStep(),
+                    if (_currentStep == 1) _buildOtpStep(),
+                    if (_currentStep == 2) _buildNewPasswordStep(),
+
+                    const SizedBox(height: 32),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: _isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : ElevatedButton(
+                        onPressed: _currentStep == 0
+                            ? _handleSendOTP
+                            : _currentStep == 1
+                            ? _handleVerifyOTP
+                            : _handleResetPassword,
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: Text(
+                          _currentStep == 0
+                              ? 'Gửi mã xác thực'
+                              : _currentStep == 1
+                              ? 'Xác thực tài khoản'
+                              : 'Xác nhận đặt lại mật khẩu',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 24),
-
-                if (_currentStep == 0) _buildEmailStep(),
-                if (_currentStep == 1) _buildOtpStep(),
-                if (_currentStep == 2) _buildNewPasswordStep(),
-
-                const SizedBox(height: 32),
-
-                _isLoading
-                    ? const CircularProgressIndicator()
-                    : ElevatedButton(
-                  onPressed: _currentStep == 0
-                      ? _handleSendOTP
-                      : _currentStep == 1
-                      ? _handleVerifyOTP
-                      : _handleResetPassword,
-                  child: Text(
-                    _currentStep == 0
-                        ? 'Gửi mã xác thực'
-                        : _currentStep == 1
-                        ? 'Xác thực tài khoản'
-                        : 'Xác nhận đặt lại mật khẩu',
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -171,7 +175,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 
-  //Input Registered Email & Send Link
   Widget _buildEmailStep() {
     return Column(
       children: [
@@ -187,25 +190,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           decoration: const InputDecoration(
             labelText: 'Địa chỉ Email đăng ký',
             prefixIcon: Icon(Icons.email_outlined),
+            border: OutlineInputBorder(),
           ),
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) return 'Vui lòng nhập Email';
-            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) return 'Email không đúng định dạng';
-            return null;
-          },
+          validator: (value) => (value == null || !value.contains('@')) ? 'Email không hợp lệ' : null,
         ),
       ],
     );
   }
 
-  //Input OTP & Verify Account
   Widget _buildOtpStep() {
     return Column(
       children: [
-        Text(
+        const Text(
           'Mã xác thực đã được gửi. Vui lòng kiểm tra hộp thư đến và nhập mã OTP vào ô dưới đây:',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.blueGrey[700], fontSize: 14),
+          style: TextStyle(color: Colors.blueGrey, fontSize: 14),
         ),
         const SizedBox(height: 24),
         TextFormField(
@@ -218,62 +217,44 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             labelText: 'Mã xác thực OTP',
             hintText: '000000',
             counterText: '',
+            border: OutlineInputBorder(),
           ),
         ),
-        const SizedBox(height: 8),
-        TextButton(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Đã gửi lại mã OTP mới!')),
-            );
-          },
-          child: const Text('Gửi lại mã OTP (Resend OTP)', style: TextStyle(color: Colors.blue)),
-        )
       ],
     );
   }
 
-  //Create New Password & Confirm Password
   Widget _buildNewPasswordStep() {
     return Column(
       children: [
         const Text(
-          'Tài khoản hợp lệ! Vui lòng thiết lập mật khẩu mới có độ bảo mật cao cho tài khoản của bạn.',
+          'Tài khoản hợp lệ! Vui lòng thiết lập mật khẩu mới có độ bảo mật cao.',
           textAlign: TextAlign.center,
           style: TextStyle(color: Colors.grey, fontSize: 14),
         ),
         const SizedBox(height: 24),
-
-        //  1: Create New Password
         TextFormField(
           controller: _newPasswordController,
           obscureText: _obscurePassword,
           decoration: InputDecoration(
-            labelText: 'Mật khẩu mới (New Password)',
+            labelText: 'Mật khẩu mới',
             prefixIcon: const Icon(Icons.lock_outline),
-
+            border: const OutlineInputBorder(),
             suffixIcon: IconButton(
               icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
               onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
             ),
           ),
-          validator: (value) => (value == null || value.length < 6) ? 'Mật khẩu phải chứa ít nhất 6 ký tự' : null,
         ),
         const SizedBox(height: 16),
-
-        //  2: Confirm Password Reset
         TextFormField(
           controller: _confirmPasswordController,
           obscureText: _obscurePassword,
           decoration: const InputDecoration(
-            labelText: 'Xác nhận lại mật khẩu mới',
+            labelText: 'Xác nhận mật khẩu mới',
             prefixIcon: Icon(Icons.lock_reset_outlined),
+            border: OutlineInputBorder(),
           ),
-          validator: (value) {
-            if (value == null || value.isEmpty) return 'Vui lòng nhập lại mật khẩu';
-            if (value != _newPasswordController.text) return 'Mật khẩu xác nhận không trùng khớp!';
-            return null;
-          },
         ),
       ],
     );

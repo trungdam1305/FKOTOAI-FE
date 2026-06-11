@@ -87,169 +87,130 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double logoSize = screenWidth > 600 ? 120 : screenWidth * 0.23;
-    final double fontSize = screenWidth > 600 ? 32 : screenWidth * 0.07;
 
     return Scaffold(
-      // appBar: AppBar(
-      //   title: const Text('Đăng nhập'),
-      // ),
       backgroundColor: Colors.grey[100],
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 450),
+              child: Form(
+                key: _formKey,
+                child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Image.asset(
-                      'assets/images/lo.png',
-                      height: logoSize,
-                      width: logoSize,
-                      fit: BoxFit.contain,
-                    ),
-                    SizedBox(width: screenWidth * 0.01),
-                    Text(
-                      'FKOTOAI',
-                      style: TextStyle(
-                        fontSize: fontSize,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blueAccent,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 25),
-
-                // 1. Username/Email Input
-                TextFormField(
-                  controller: _identifierController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Tên tài khoản hoặc Email',
-                    prefixIcon: Icon(Icons.person_outline_rounded),
-                  ),
-                  validator: (value) => (value == null || value.trim().isEmpty) ? 'Vui lòng nhập Username hoặc Email' : null,
-                ),
-                const SizedBox(height: 16),
-
-                // 2. Password Input
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: 'Mật khẩu',
-                    prefixIcon: const Icon(Icons.lock_outline_rounded),
-                    suffixIcon: IconButton(
-                      icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                    ),
-                  ),
-                  validator: (value) => (value == null || value.isEmpty) ? 'Vui lòng nhập mật khẩu' : null,
-                ),
-                const SizedBox(height: 8),
-
-                // Remember Me & Forgot Password
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Checkbox(
-                          value: _rememberMe,
-                          onChanged: (bool? value) => setState(() => _rememberMe = value ?? false),
-                        ),
-                        const Text('Remember me', style: TextStyle(fontSize: 14)),
-                      ],
-                    ),
-                    // Navigate to Forgot Password
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
-                        );
-                      },
-                      child: const Text('Quên mật khẩu?'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-
-                _isLoading
-                    ? const CircularProgressIndicator()
-                    : ElevatedButton(
-                  onPressed: _handleLogin,
-
-                  child: const Text('Đăng nhập'),
-                ),
-                const SizedBox(height: 20),
-
-                Row(
-                  children: const [
-                    Expanded(child: Divider(thickness: 1, endIndent: 10, indent: 10)),
-                    Text("HOẶC", style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold)),
-                    Expanded(child: Divider(thickness: 1, indent: 10, endIndent: 10)),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                _isGoogleLoading
-                    ? const CircularProgressIndicator()
-                    : LayoutBuilder(
-                  builder: (context, constraints) {
-                    final double screenWidth = MediaQuery.of(context).size.width;
-                    final double buttonWidth = screenWidth > 600 ? 400 : screenWidth * 0.85;
-
-                    return SizedBox(
-                      width: buttonWidth,
-                      height: 50,
-                      child: OutlinedButton.icon(
-                        onPressed: _handleGoogleLogin,
-                        icon: Image.asset(
-                          'assets/images/img.png',
-                          height: 22,
-                          width: 22,
-                          fit: BoxFit.contain,
-                        ),
-                        label: const Flexible(
-                          child: Text(
-                            'Đăng nhập với Google',
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: Colors.black87,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
+                        Image.asset('assets/images/lo.png', height: 80, width: 80, fit: BoxFit.contain),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'FKOTOAI',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blueAccent,
+                            letterSpacing: 1.2,
                           ),
                         ),
-                        style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          side: const BorderSide(color: Colors.grey),
-                          backgroundColor: Colors.white,
+                      ],
+                    ),
+                    const SizedBox(height: 30),
+
+                    // 1. Username
+                    TextFormField(
+                      controller: _identifierController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tên tài khoản hoặc Email',
+                        prefixIcon: Icon(Icons.person_outline_rounded),
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) => (value == null || value.trim().isEmpty) ? 'Vui lòng nhập Username' : null,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 2. Password
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        labelText: 'Mật khẩu',
+                        prefixIcon: const Icon(Icons.lock_outline_rounded),
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                         ),
                       ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 24),
+                      validator: (value) => (value == null || value.isEmpty) ? 'Vui lòng nhập mật khẩu' : null,
+                    ),
 
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const RegisterScreen()),
-                    );
-                  },
-                  child: const Text('Chưa có tài khoản? Đăng ký ngay', style: TextStyle(color: Colors.blueGrey)),
+                    // Remember Me & Forgot Password
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Checkbox(value: _rememberMe, onChanged: (v) => setState(() => _rememberMe = v ?? false)),
+                            const Text('Remember me'),
+                          ],
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ForgotPasswordScreen())),
+                          child: const Text('Quên mật khẩu?'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Login Button (full width)
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: _isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : ElevatedButton(
+                        onPressed: _handleLogin,
+                        style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                        child: const Text('Đăng nhập', style: TextStyle(fontSize: 16)),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Divider
+                    Row(
+                      children: const [
+                        Expanded(child: Divider()),
+                        Padding(padding: EdgeInsets.symmetric(horizontal: 10), child: Text("HOẶC")),
+                        Expanded(child: Divider()),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Google Login Button
+                    // SizedBox(
+                    //   width: double.infinity,
+                    //   height: 50,
+                    //   child: OutlinedButton.icon(
+                    //     onPressed: _isGoogleLoading ? null : _handleGoogleLogin,
+                    //     icon: Image.asset('assets/images/img.png', height: 22, width: 22),
+                    //     label: const Text('Đăng nhập với Google', style: TextStyle(color: Colors.black87)),
+                    //     style: OutlinedButton.styleFrom(
+                    //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    //     ),
+                    //   ),
+                    // ),
+                    // const SizedBox(height: 20),
+
+                    TextButton(
+                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterScreen())),
+                      child: const Text('Chưa có tài khoản? Đăng ký ngay'),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),

@@ -18,7 +18,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.purple[50], // Màu nền sáng ban đầu
+      backgroundColor: Colors.purple[50],
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -42,7 +42,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
             itemBuilder: (context, index) => Center(child: FlashcardItem(card: widget.flashcards[index])),
           ),
         ),
-        // Thanh điều hướng mũi tên (Dark icon trên nền sáng)
+
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
           child: Row(
@@ -107,7 +107,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
   }
 }
 
-// Widget xử lý lật thẻ 3D giữ nguyên
+
 class FlashcardItem extends StatefulWidget {
   final Map<String, dynamic> card;
   const FlashcardItem({super.key, required this.card});

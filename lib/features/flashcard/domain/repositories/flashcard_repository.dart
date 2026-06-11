@@ -4,7 +4,7 @@ abstract class FlashcardRepository {
 
   Future<void> submitCardReview(String token, int flashcardId, String status);
 
-  // --- Các hàm mới cho CRUD Vocabulary Items ---
+  // CRUD Vocabulary Items
   Future<Map<String, dynamic>> addVocabToChapter(
       String token, int chapterId, String word, String meaning);
 

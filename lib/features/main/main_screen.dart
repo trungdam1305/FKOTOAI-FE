@@ -72,15 +72,12 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isDesktop = screenWidth > 800;
+
     final List<Widget> screens = [
       const StudentHomeScreen(),
-      VocabularyChapterScreen(
-        onExitPressed: () {
-          setState(() {
-            _selectedIndex = 0;
-          });
-        },
-      ),
+      VocabularyChapterScreen(onExitPressed: () => setState(() => _selectedIndex = 0)),
       const QuizTab(),
       const ProfileTab(),
     ];
@@ -88,32 +85,49 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('FKOTOAI'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset('assets/images/lo.png', height: 60, width: 60, fit: BoxFit.contain),
+            const SizedBox(width: 10),
+            const Text('FKOTOAI'),
+          ],
+        ),
         centerTitle: true,
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         actions: [
           _isLoggingOut
-              ? const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0),
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-            ),
-          )
-              : IconButton(
-            icon: const Icon(Icons.logout_rounded),
-            tooltip: 'Đăng xuất',
-            onPressed: _handleLogout,
-          ),
+              ? const Padding(padding: EdgeInsets.all(16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)))
+              : IconButton(icon: const Icon(Icons.logout_rounded), onPressed: _handleLogout),
         ],
       ),
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: screens,
-      ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
+      body: isDesktop
+          ? Row(
+        children: [
+          _buildNavigationRail(),
+          const VerticalDivider(thickness: 1, width: 1),
+          Expanded(child: IndexedStack(index: _selectedIndex, children: screens)),
+        ],
+      )
+          : IndexedStack(index: _selectedIndex, children: screens),
+      bottomNavigationBar: isDesktop ? null : _buildBottomNavigationBar(),
+    );
+  }
+
+  Widget _buildNavigationRail() {
+    return NavigationRail(
+      selectedIndex: _selectedIndex,
+      onDestinationSelected: _onItemTapped,
+      labelType: NavigationRailLabelType.all,
+      selectedLabelTextStyle: TextStyle(color: primaryBlue, fontWeight: FontWeight.bold),
+      selectedIconTheme: IconThemeData(color: primaryBlue),
+      destinations: const [
+        NavigationRailDestination(icon: Icon(Icons.home), label: Text('Home')),
+        NavigationRailDestination(icon: Icon(Icons.flash_on_rounded), label: Text('Flashcards')),
+        NavigationRailDestination(icon: Icon(Icons.emoji_events), label: Text('Thi đấu')),
+        NavigationRailDestination(icon: Icon(Icons.person), label: Text('Profile')),
+      ],
     );
   }
 
@@ -123,8 +137,6 @@ class _MainScreenState extends State<MainScreen> {
       child: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
-        showSelectedLabels: true,
-        showUnselectedLabels: true,
         selectedItemColor: primaryBlue,
         unselectedItemColor: const Color(0xFF4A4A4A),
         currentIndex: _selectedIndex,
@@ -133,7 +145,7 @@ class _MainScreenState extends State<MainScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home, size: 28), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.flash_on_rounded, size: 28), label: 'Flashcards'),
-          BottomNavigationBarItem(icon: Icon(Icons.emoji_events_outlined, size: 28), activeIcon: Icon(Icons.emoji_events), label: 'Thi đấu'),
+          BottomNavigationBarItem(icon: Icon(Icons.emoji_events, size: 28), label: 'Thi đấu'),
           BottomNavigationBarItem(icon: Icon(Icons.person, size: 28), label: 'Profile'),
         ],
       ),
