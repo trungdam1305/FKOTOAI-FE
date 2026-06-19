@@ -115,57 +115,76 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Khôi phục mật khẩu')),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 500),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset(
-                      'assets/images/lo.png',
-                      height: 100,
-                      width: 100,
-                      fit: BoxFit.contain,
-                    ),
-                    const SizedBox(height: 24),
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF2B5C92)),
+        title: const Text('Khôi phục mật khẩu', style: TextStyle(color: Color(0xFF2B5C92))),
+      ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF97CADB),
+              Color(0xFFD6E8EE),
+              Color(0xFFF8F8F8),
+              Colors.white,
+            ],
+            stops: [0.0, 0.4, 0.7, 1.0],
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset('assets/images/lo.png', height: 100, width: 100, fit: BoxFit.contain),
+                      const SizedBox(height: 24),
 
-                    if (_currentStep == 0) _buildEmailStep(),
-                    if (_currentStep == 1) _buildOtpStep(),
-                    if (_currentStep == 2) _buildNewPasswordStep(),
+                      if (_currentStep == 0) _buildEmailStep(),
+                      if (_currentStep == 1) _buildOtpStep(),
+                      if (_currentStep == 2) _buildNewPasswordStep(),
 
-                    const SizedBox(height: 32),
+                      const SizedBox(height: 32),
 
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: _isLoading
-                          ? const Center(child: CircularProgressIndicator())
-                          : ElevatedButton(
-                        onPressed: _currentStep == 0
-                            ? _handleSendOTP
-                            : _currentStep == 1
-                            ? _handleVerifyOTP
-                            : _handleResetPassword,
-                        style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                        child: Text(
-                          _currentStep == 0
-                              ? 'Gửi mã xác thực'
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: _isLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : ElevatedButton(
+                          onPressed: _currentStep == 0
+                              ? _handleSendOTP
                               : _currentStep == 1
-                              ? 'Xác thực tài khoản'
-                              : 'Xác nhận đặt lại mật khẩu',
-                          style: const TextStyle(fontSize: 16),
+                              ? _handleVerifyOTP
+                              : _handleResetPassword,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2B5C92),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: Text(
+                            _currentStep == 0
+                                ? 'Gửi mã xác thực'
+                                : _currentStep == 1
+                                ? 'Xác thực tài khoản'
+                                : 'Xác nhận đặt lại mật khẩu',
+                            style: const TextStyle(fontSize: 16, color: Colors.white),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -179,19 +198,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     return Column(
       children: [
         const Text(
-          'Nhập email đã đăng ký của bạn. Hệ thống sẽ gửi một mã xác thực OTP để xác minh quyền sở hữu tài khoản.',
+          'Nhập email đã đăng ký của bạn. Hệ thống sẽ gửi một mã xác thực OTP.',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.grey, fontSize: 14),
+          style: TextStyle(color: Color(0xFF2B5C92), fontSize: 14),
         ),
         const SizedBox(height: 24),
         TextFormField(
           controller: _emailController,
           keyboardType: TextInputType.emailAddress,
-          decoration: const InputDecoration(
-            labelText: 'Địa chỉ Email đăng ký',
-            prefixIcon: Icon(Icons.email_outlined),
-            border: OutlineInputBorder(),
-          ),
+          decoration: _inputDecoration('Địa chỉ Email đăng ký', Icons.email_outlined),
           validator: (value) => (value == null || !value.contains('@')) ? 'Email không hợp lệ' : null,
         ),
       ],
@@ -202,9 +217,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     return Column(
       children: [
         const Text(
-          'Mã xác thực đã được gửi. Vui lòng kiểm tra hộp thư đến và nhập mã OTP vào ô dưới đây:',
+          'Vui lòng kiểm tra hộp thư đến và nhập mã OTP vào ô dưới đây:',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.blueGrey, fontSize: 14),
+          style: TextStyle(color: Color(0xFF2B5C92), fontSize: 14),
         ),
         const SizedBox(height: 24),
         TextFormField(
@@ -212,12 +227,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           keyboardType: TextInputType.number,
           maxLength: 6,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 8),
-          decoration: const InputDecoration(
-            labelText: 'Mã xác thực OTP',
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 8, color: Color(0xFF2B5C92)),
+          decoration: _inputDecoration('Mã xác thực OTP', Icons.numbers_outlined).copyWith(
             hintText: '000000',
             counterText: '',
-            border: OutlineInputBorder(),
           ),
         ),
       ],
@@ -228,20 +241,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     return Column(
       children: [
         const Text(
-          'Tài khoản hợp lệ! Vui lòng thiết lập mật khẩu mới có độ bảo mật cao.',
+          'Tài khoản hợp lệ! Vui lòng thiết lập mật khẩu mới.',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.grey, fontSize: 14),
+          style: TextStyle(color: Color(0xFF2B5C92), fontSize: 14),
         ),
         const SizedBox(height: 24),
         TextFormField(
           controller: _newPasswordController,
           obscureText: _obscurePassword,
-          decoration: InputDecoration(
-            labelText: 'Mật khẩu mới',
-            prefixIcon: const Icon(Icons.lock_outline),
-            border: const OutlineInputBorder(),
+          style: const TextStyle(color: Color(0xFF2B5C92)),
+          decoration: _inputDecoration('Mật khẩu mới', Icons.lock_outline).copyWith(
             suffixIcon: IconButton(
-              icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+              icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: const Color(0xFF2B5C92)),
               onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
             ),
           ),
@@ -250,13 +261,23 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         TextFormField(
           controller: _confirmPasswordController,
           obscureText: _obscurePassword,
-          decoration: const InputDecoration(
-            labelText: 'Xác nhận mật khẩu mới',
-            prefixIcon: Icon(Icons.lock_reset_outlined),
-            border: OutlineInputBorder(),
-          ),
+          style: const TextStyle(color: Color(0xFF2B5C92)),
+          decoration: _inputDecoration('Xác nhận mật khẩu mới', Icons.lock_reset_outlined),
         ),
       ],
+    );
+  }
+
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Color(0xFF2B5C92)),
+      prefixIcon: Icon(icon, color: const Color(0xFF2B5C92)),
+      filled: true,
+      fillColor: Colors.white.withOpacity(0.7),
+      enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF2B5C92), width: 1.5)),
+      focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF2B5C92), width: 2.0)),
+      border: const OutlineInputBorder(),
     );
   }
 }

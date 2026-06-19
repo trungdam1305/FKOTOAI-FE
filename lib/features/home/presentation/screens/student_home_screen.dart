@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'package:bim/core/theme/app_colors.dart';
+import 'package:bim/core/theme/app_text_styles.dart';
 import '../controllers/home_controller.dart';
 import 'package:bim/features/authentication/data/auth_local_data_source.dart';
 import 'package:bim/features/flashcard/presentation/screens/VocabularyChapterScreen.dart';
@@ -48,27 +50,11 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       _homeController.getDashboard(
         token: userToken,
         onLoading: () {},
-        onSuccess: (data) {
-          if (!mounted) return;
-          setState(() {
-            _isLoading = false;
-            _dashboardData = data;
-          });
-        },
-        onError: (error) {
-          if (!mounted) return;
-          setState(() {
-            _isLoading = false;
-            _errorMessage = error;
-          });
-        },
+        onSuccess: (data) => setState(() { _isLoading = false; _dashboardData = data; }),
+        onError: (error) => setState(() { _isLoading = false; _errorMessage = error; }),
       );
     } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Lỗi đọc mã xác thực hệ thống: $e';
-      });
+      setState(() { _isLoading = false; _errorMessage = 'Lỗi hệ thống: $e'; });
     }
   }
 

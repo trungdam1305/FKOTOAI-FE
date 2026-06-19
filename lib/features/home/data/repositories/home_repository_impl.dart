@@ -12,9 +12,7 @@ class HomeRepositoryImpl implements HomeRepository {
 
       final payload = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
       final Map<String, dynamic> data = jsonDecode(payload);
-
       if (data['studentID'] != null) return data['studentID'].toString();
-
       if (data['id'] != null) return data['id'].toString();
       if (data['userId'] != null) return data['userId'].toString();
 

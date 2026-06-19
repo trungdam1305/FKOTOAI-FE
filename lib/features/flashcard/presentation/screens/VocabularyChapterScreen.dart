@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:bim/features/authentication/data/auth_local_data_source.dart';
 import 'package:bim/features/flashcard/data/repositories/VocabularyChapterRepositoryImpl.dart';
 import 'flashcard_dashboard_screen.dart';
+import 'package:bim/core/theme/app_colors.dart';
+import 'package:bim/core/theme/gradient_background.dart';
 
 class VocabularyChapterScreen extends StatefulWidget {
   final VoidCallback? onExitPressed;
@@ -18,7 +20,6 @@ class _VocabularyChapterScreenState extends State<VocabularyChapterScreen> {
   bool _isLoading = true;
   String _errorMessage = '';
   List<dynamic> _chapters = [];
-
   String _realToken = '';
   final String _studentId = "";
 
@@ -260,34 +261,36 @@ class _VocabularyChapterScreenState extends State<VocabularyChapterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        title: const Text('Từ vựng & Học phần', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
-        centerTitle: true,
-        leading: widget.onExitPressed != null
-            ? IconButton(icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black, size: 20), onPressed: widget.onExitPressed)
-            : IconButton(icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black, size: 20), onPressed: () => Navigator.pop(context)),
-        actions: [
-          IconButton(icon: const Icon(Icons.refresh_rounded, color: Colors.blue), onPressed: _initAuthAndFetchChapters)
-        ],
-      ),
-      body: _buildBody(),
-      floatingActionButton: _isLoading || _errorMessage.isNotEmpty
-          ? null
-          : FloatingActionButton(
-        onPressed: () => _showChapterDialog(),
-        backgroundColor: Colors.blue,
-        child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+    return GradientBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        resizeToAvoidBottomInset: true,
+        appBar: AppBar(
+          backgroundColor: AppColors.midnightBlue,
+          elevation: 0.5,
+          title: const Text('Từ vựng & Học phần', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+          centerTitle: true,
+          leading: widget.onExitPressed != null
+              ? IconButton(icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20), onPressed: widget.onExitPressed)
+              : IconButton(icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20), onPressed: () => Navigator.pop(context)),
+          actions: [
+            IconButton(icon: const Icon(Icons.refresh_rounded, color: Colors.white), onPressed: _initAuthAndFetchChapters)
+          ],
+        ),
+        body: _buildBody(),
+        floatingActionButton: _isLoading || _errorMessage.isNotEmpty
+            ? null
+            : FloatingActionButton(
+          onPressed: () => _showChapterDialog(),
+          backgroundColor: AppColors.primary,
+          child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+        ),
       ),
     );
   }
 
   Widget _buildBody() {
-    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_isLoading) return const Center(child: CircularProgressIndicator(color: AppColors.primary));
 
     if (_errorMessage.isNotEmpty) {
       return Center(
@@ -331,7 +334,7 @@ class _VocabularyChapterScreenState extends State<VocabularyChapterScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text('Số lượng chương học cá nhân', style: TextStyle(fontSize: 13, color: Colors.grey)),
-                    Text('$totalChapters Chương', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.blue)),
+                    Text('$totalChapters Chương', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.primary)),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -341,7 +344,7 @@ class _VocabularyChapterScreenState extends State<VocabularyChapterScreen> {
                     value: totalChapters > 0 ? 1.0 : 0.0,
                     minHeight: 8,
                     backgroundColor: Colors.grey[200],
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
                   ),
                 ),
               ],
@@ -399,10 +402,10 @@ class _VocabularyChapterScreenState extends State<VocabularyChapterScreen> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: Colors.purple.withOpacity(0.08),
+                            color: AppColors.primary.withOpacity(0.08),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(Icons.style_rounded, color: Colors.purple, size: 22),
+                          child: const Icon(Icons.style_rounded, color: AppColors.primary, size: 22),
                         ),
                         const SizedBox(width: 14),
                         Expanded(

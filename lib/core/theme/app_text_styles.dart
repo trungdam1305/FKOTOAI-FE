@@ -6,10 +6,18 @@ class AppTextStyles {
     fontSize: 24,
     fontWeight: FontWeight.bold,
     color: AppColors.textPrimary,
+    letterSpacing: 1.2,
   );
+
   static const TextStyle bodyNormal = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.normal,
     color: AppColors.textPrimary,
+  );
+
+  static const TextStyle buttonText = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: Colors.white,
   );
 }
