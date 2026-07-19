@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:bim/core/constants/api_constants.dart';
 import '../../domain/repositories/profile_repository.dart';
-
+import '../../domain/models/subscription_package.dart';
 class ProfileRepositoryImpl implements ProfileRepository {
 
   String _getStudentIdFromToken(String token) {
@@ -61,4 +61,19 @@ class ProfileRepositoryImpl implements ProfileRepository {
       throw Exception('Lỗi kết nối hệ thống hồ sơ: $e');
     }
   }
+  @override
+  Future<List<SubscriptionPackage>> getSubscriptionPackages(String token) async {
+    final response = await http.get(
+      Uri.parse('${ApiConstants.baseUrl}/api/v1/subscription/packages'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+      return data.map((json) => SubscriptionPackage.fromJson(json)).toList();
+    } else {
+      throw Exception('Không thể tải danh sách gói cước');
+    }
+  }
+
 }

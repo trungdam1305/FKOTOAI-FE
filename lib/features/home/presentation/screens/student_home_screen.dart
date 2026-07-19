@@ -6,6 +6,9 @@ import '../controllers/home_controller.dart';
 import 'package:bim/features/authentication/data/auth_local_data_source.dart';
 import 'package:bim/features/flashcard/presentation/screens/VocabularyChapterScreen.dart';
 import 'package:bim/features/flashcard/presentation/screens/progress_screen.dart';
+import 'package:bim/features/ai_learning/presentation/screens/ai_learning_hub_screen.dart';
+import 'package:bim/features/profile/presentation/controllers/profile_controller.dart';
+import 'package:bim/features/translation/presentation/screens/translation_screen.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -15,6 +18,7 @@ class StudentHomeScreen extends StatefulWidget {
 }
 
 class _StudentHomeScreenState extends State<StudentHomeScreen> {
+  final ProfileController _profileController = ProfileController();
   final HomeController _homeController = HomeController();
   final AuthLocalDataSource _authLocalDataSource = AuthLocalDataSource();
 
@@ -26,6 +30,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   void initState() {
     super.initState();
     _fetchHomeData();
+    _profileController.loadProfileData(); // thêm dòng này
   }
 
   void _fetchHomeData() async {
@@ -272,12 +277,34 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             ),
           );
         }),
-        _buildFeatureItem(Icons.quiz_rounded, 'Online Quiz', Colors.orange, () {
+        _buildFeatureItem(Icons.smart_toy_rounded, 'AI Learning', Colors.orange, () {
+          _navigateToAiLearningHub();
         }),
-        _buildFeatureItem(Icons.analytics_rounded, 'Dashboard', Colors.teal, () {
-          _navigateToProgressScreen();
+        // Đã thay thế mục thứ 3 thành Dịch thuật
+        _buildFeatureItem(Icons.g_translate_rounded, 'Dịch thuật', Colors.green, () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const TranslationScreen(), // Điều hướng sang màn hình Dịch
+            ),
+          );
         }),
       ],
+    );
+  }
+  void _navigateToAiLearningHub() {
+    final dynamic rawId = _profileController.profile?['studentId']
+        ?? _profileController.profile?['student_id']
+        ?? _profileController.profile?['id'];
+    final String studentId = rawId?.toString() ?? '';
+
+    debugPrint('DEBUG studentId lấy từ profile = "$studentId"');
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AiLearningHubScreen(studentId: studentId),
+      ),
     );
   }
 
@@ -308,13 +335,27 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     );
   }
 
-  void _navigateToProgressScreen() {
+  void _navigateToProgressScreen() async {
+    if (_profileController.profile == null) {
+      await _profileController.loadProfileData(); // đợi load xong nếu chưa có
+    }
+
+    final dynamic rawId = _profileController.profile?['studentId']
+        ?? _profileController.profile?['student_id']
+        ?? _profileController.profile?['id'];
+    final String studentId = rawId?.toString() ?? '';
+
+    if (studentId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không lấy được thông tin học viên. Vui lòng thử lại.')),
+      );
+      return;
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ProgressScreen(
-          studentId: _dashboardData?['studentId']?.toString() ?? '',
-        ),
+        builder: (context) => ProgressScreen(studentId: studentId),
       ),
     );
   }
