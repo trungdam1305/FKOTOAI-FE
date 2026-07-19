@@ -4,7 +4,7 @@ import 'package:bim/features/authentication/data/auth_local_data_source.dart';
 import 'package:bim/features/authentication/presentation/screens/login_screen.dart';
 import 'package:bim/features/home/presentation/screens/student_home_screen.dart';
 import 'package:bim/features/profile/presentation/screens/profile_screen.dart';
-import 'package:bim/features/quiz/presentation/quiz_tab.dart';
+import 'package:bim/features/quiz/presentation/screens/course_list_screen.dart';
 import 'package:bim/features/flashcard/presentation/screens/VocabularyChapterScreen.dart';
 
 import 'package:bim/core/theme/app_colors.dart';
@@ -26,7 +26,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const StudentHomeScreen(),
     const VocabularyChapterScreen(),
-    const QuizTab(),
+    const CourseListScreen(),
     const ProfileTab(),
   ];
 
@@ -95,7 +95,7 @@ class _MainScreenState extends State<MainScreen> {
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
         BottomNavigationBarItem(icon: Icon(Icons.flash_on_outlined), label: 'Flashcards'),
-        BottomNavigationBarItem(icon: Icon(Icons.emoji_events_outlined), label: 'Thi đấu'),
+        BottomNavigationBarItem(icon: Icon(Icons.emoji_events_outlined), label: 'Khóa học'),
         BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
       ],
     );

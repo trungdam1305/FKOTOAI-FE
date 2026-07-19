@@ -1,6 +1,5 @@
 
 class ApiConstants {
-  // static const String baseUrl = 'https://0f510d00-6191-4436-a141-66c5fb3f52a6.mock.pstmn.io';
   static const String baseUrl = 'http://10.0.2.2:8080/FKOTOAI';
   //authen
   static const String loginEndpoint = '$baseUrl/authen/log-in';
@@ -36,4 +35,10 @@ class ApiConstants {
       '$_vocabItemsBase/$chapterId/items?studentId=$studentId';
   static String vocabItemDetailEndpoint(Object chapterId, Object vocabId, Object studentId) =>
       '$_vocabItemsBase/$chapterId/items/$vocabId?studentId=$studentId';
+
+  //tools
+  static const String ocrLookupEndpoint = '$baseUrl/api/v1/ocr/recognize';
+
+  // Courses
+  static const String getCourses = '/api/v1/courses';
 }

@@ -6,6 +6,8 @@ import '../controllers/home_controller.dart';
 import 'package:bim/features/authentication/data/auth_local_data_source.dart';
 import 'package:bim/features/flashcard/presentation/screens/VocabularyChapterScreen.dart';
 import 'package:bim/features/flashcard/presentation/screens/progress_screen.dart';
+import 'package:bim/features/tools/presentation/screens/ocr_screen.dart';
+
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -276,6 +278,14 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         }),
         _buildFeatureItem(Icons.analytics_rounded, 'Dashboard', Colors.teal, () {
           _navigateToProgressScreen();
+        }),
+        _buildFeatureItem(Icons.camera_alt_rounded, 'Tra từ OCR', const Color(0xFF3B40E8), () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const OcrScreen(),
+            ),
+          );
         }),
       ],
     );
