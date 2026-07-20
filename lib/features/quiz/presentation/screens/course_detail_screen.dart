@@ -10,7 +10,8 @@ import 'package:bim/core/theme/gradient_background.dart';
 import 'package:bim/features/authentication/data/auth_local_data_source.dart';
 import 'package:bim/features/quiz/presentation/screens/video_player_screen.dart';
 import 'package:bim/features/quiz/presentation/screens/pdf_viewer_screen.dart';
-
+import 'package:bim/features/quiz/presentation/screens/flashcard_screen.dart';
+import 'package:bim/features/quiz/presentation/screens/exam_screen.dart';
 class CourseDetailScreen extends StatefulWidget {
   final String slug;
 
@@ -197,15 +198,34 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     const SizedBox(height: 4),
 
                     ...lessons.map<Widget>((lesson) {
-                      final String type = lesson['type']?.toString() ?? 'video';
+                      final String type =
+                          lesson['lesson_type']?.toString() ??
+                              lesson['type']?.toString() ??
+                              'video';
+
                       final bool isDocs = type == 'docs';
+                      final bool isFlashcard = type == 'flashcard';
+                      final bool isExam =
+                          type == 'exam' || type == 'last_exam';
 
                       return ListTile(
                         dense: true,
                         contentPadding: EdgeInsets.zero,
                         leading: Icon(
-                          isDocs ? Icons.description : Icons.play_circle_outline,
-                          color: isDocs ? Colors.amber[800] : AppColors.primary,
+                          isDocs
+                              ? Icons.description
+                              : isFlashcard
+                              ? Icons.style
+                              : isExam
+                              ? Icons.quiz
+                              : Icons.play_circle_outline,
+                          color: isDocs
+                              ? Colors.amber[800]
+                              : isFlashcard
+                              ? Colors.purple
+                              : isExam
+                              ? Colors.red
+                              : AppColors.primary,
                           size: 22,
                         ),
                         title: Text(
@@ -213,83 +233,175 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           style: const TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w500),
                         ),
                         subtitle: Text(
-                          isDocs ? 'Tài liệu PDF' : 'Thời lượng: ${lesson['expect_time'] ?? 0} phút',
-                          style: const TextStyle(color: Colors.black54, fontSize: 11),
+                          isDocs
+                              ? 'Tài liệu PDF'
+                              : isFlashcard
+                              ? 'Flashcards'
+                              : isExam
+                              ? 'Đề thi'
+                              : 'Thời lượng: ${lesson['expect_time'] ?? 0} phút',
+                          style: const TextStyle(
+                            color: Colors.black54,
+                            fontSize: 11,
+                          ),
                         ),
                         onTap: () async {
-                          final String lessonName = lesson['name']?.toString() ?? 'Bài học';
+                          final String lessonName =
+                              lesson['name']?.toString() ?? 'Bài học';
 
+                          //======================
+                          // PDF
+                          //======================
                           if (isDocs) {
                             final List<dynamic> docs = lesson['documents'] ?? [];
+
                             String fileName = '';
+
                             if (docs.isNotEmpty && docs[0]['value'] != null) {
                               fileName = docs[0]['value'].toString();
                             }
 
                             if (fileName.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Không tìm thấy tên file tài liệu trong hệ thống!')),
+                                const SnackBar(
+                                  content: Text("Không tìm thấy file PDF"),
+                                ),
                               );
                               return;
                             }
 
-                            final String pdfUrl = 'https://dungmori.com/cdn/lesson/document/$fileName';
-
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Đang tải tài liệu: $lessonName...'), duration: const Duration(seconds: 2)),
-                            );
+                            final pdfUrl =
+                                "https://dungmori.com/cdn/lesson/document/$fileName";
 
                             try {
-                              final io.Directory tempDir = await getTemporaryDirectory();
-                              final String localPath = '${tempDir.path}/$fileName';
+                              final tempDir = await getTemporaryDirectory();
+
+                              final localPath =
+                                  "${tempDir.path}/$fileName";
 
                               await Dio().download(
                                 pdfUrl,
                                 localPath,
                                 options: Options(
                                   headers: {
-                                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                                    'Referer': 'https://dungmori.com/',
+                                    'User-Agent':
+                                    'Mozilla/5.0',
+                                    'Referer':
+                                    'https://dungmori.com/',
                                   },
                                 ),
                               );
 
-                              if (context.mounted) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => PDFViewerScreen(filePath: localPath, title: lessonName),
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Lỗi tải file: $e'), backgroundColor: Colors.red),
-                                );
-                              }
-                            }
-                          } else {
-                            final String? videoUrl = lesson['video_url']?.toString() ?? lesson['stream_url']?.toString();
-
-                            if (videoUrl != null) {
-                              final String playUrl = videoUrl.startsWith('http') ? videoUrl : '${ApiConstants.baseUrl}$videoUrl';
+                              if (!mounted) return;
 
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => VideoPlayerScreen(
-                                    url: playUrl,
+                                  builder: (_) => PDFViewerScreen(
+                                    filePath: localPath,
                                     title: lessonName,
                                   ),
                                 ),
                               );
-                            } else {
+                            } catch (e) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Bài học này không có dữ liệu video!')),
+                                SnackBar(content: Text("$e")),
                               );
                             }
+
+                            return;
                           }
+
+                          //======================
+                          // FLASHCARD
+                          //======================
+
+                          if (isFlashcard) {
+                            final List<dynamic> flashcards =
+                                lesson['flashcard_data'] ?? [];
+
+                            if (flashcards.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Flashcard chưa có dữ liệu"),
+                                ),
+                              );
+                              return;
+                            }
+
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => FlashcardScreen(
+                                  title: lessonName,
+                                  flashcards: flashcards,
+                                ),
+                              ),
+                            );
+
+                            return;
+                          }
+
+                          //======================
+// ĐỀ THI
+//======================
+
+                          if (isExam) {
+                            final List<dynamic> questions =
+                                lesson['test_data'] ?? [];
+
+                            if (questions.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Bài test chưa có dữ liệu"),
+                                ),
+                              );
+                              return;
+                            }
+
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ExamScreen(
+                                  title: lessonName,
+                                  questions: questions,
+                                ),
+                              ),
+                            );
+
+                            return;
+                          }
+
+                          //======================
+                          // VIDEO
+                          //======================
+
+                          final String? videoUrl =
+                              lesson['video_url']?.toString() ??
+                                  lesson['stream_url']?.toString();
+
+                          if (videoUrl == null || videoUrl.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Bài học này không có video"),
+                              ),
+                            );
+                            return;
+                          }
+
+                          final playUrl = videoUrl.startsWith("http")
+                              ? videoUrl
+                              : "${ApiConstants.baseUrl}$videoUrl";
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => VideoPlayerScreen(
+                                url: playUrl,
+                                title: lessonName,
+                              ),
+                            ),
+                          );
                         },
                       );
                     }),
